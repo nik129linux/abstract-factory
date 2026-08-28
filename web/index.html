@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catering — Abstract Factory + agente</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>Servicio de catering</h1>
+  <p class="sub">Abstract Factory. El agente elige la cocina y decide los platos;
+     la fábrica garantiza que los cuatro sean de la misma familia.</p>
+  <p class="agent">agente: <b id="agent">…</b></p>
+</header>
+
+<section class="card" id="orderCard">
+  <h2><span class="step">1</span> El pedido</h2>
+  <p class="hint">Esto es lo único que escribe una persona en todo el flujo.</p>
+  <div class="form">
+    <label>Comensales <input id="diners" type="number" min="1" value="6"></label>
+    <label>Ocasión <input id="occasion" placeholder="cena de cierre de proyecto"></label>
+    <label>Restricciones <input id="restrictions" placeholder="uno no come cerdo"></label>
+    <label class="wide">Nota del cliente
+      <input id="notes" placeholder="algo liviano, que no pese para volver a trabajar"></label>
+  </div>
+  <button id="send">Mandar el pedido al agente</button>
+</section>
+
+<section class="card hidden" id="chooseCard">
+  <h2><span class="step">2</span> La decisión del agente</h2>
+  <div class="verdict">
+    <div class="pick"><span id="tradition">—</span></div>
+    <div class="meta">
+      <p>fábrica instanciada: <code id="factory">—</code></p>
+      <p id="accent" class="accent">—</p>
+    </div>
+  </div>
+  <details>
+    <summary>lo que se le mandó al modelo, y lo que contestó</summary>
+    <pre id="choosePrompt"></pre>
+    <pre class="reply" id="chooseReply"></pre>
+  </details>
+</section>
+
+<section class="card hidden" id="menuCard">
+  <h2><span class="step">3</span> Los cuatro platos</h2>
+  <p class="hint">Uno por consulta, para que se vea al agente trabajando.
+     La clase de cada plato ya la decidió la fábrica antes de que el modelo abriera la boca.</p>
+  <div id="courses"></div>
+</section>
+
+<section class="card hidden" id="checkCard">
+  <h2><span class="step">4</span> Las dos revisiones</h2>
+  <div class="checks">
+    <div class="check" id="familyCheck">
+      <h3>¿Los cuatro son de la misma cocina?</h3>
+      <p class="result" id="familyResult">—</p>
+      <p class="why">Esto lo garantiza la fábrica: no hay otro camino para crear un plato.</p>
+    </div>
+    <div class="check" id="wordCheck">
+      <h3>¿El modelo respetó la lista negra?</h3>
+      <p class="result" id="wordResult">—</p>
+      <p class="why">Esto <b>no</b> lo garantiza nadie. El agente escribe texto libre y se puede
+         ir de la familia sin cambiar de clase. Por eso cada plato la revisa.</p>
+    </div>
+  </div>
+  <button id="mixed" class="ghost">¿Y si armo el menú sin la fábrica?</button>
+  <div id="mixedOut" class="mixed hidden"></div>
+</section>
+
+<p class="err hidden" id="err"></p>
+
+<script src="app.js"></script>
+</body>
+</html>

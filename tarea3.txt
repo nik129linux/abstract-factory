@@ -1,0 +1,82 @@
+Taller 3 - Abstract Factory con agente de IA
+
+Enunciado (clase del 2026-08-28): elegir un caso de estudio propio, distinto de
+los explicados en clase, aplicarle Abstract Factory en Java con interfaz, y que
+el taller use inteligencia artificial de verdad -- un agente que construya los
+objetos solo, no un chatbot y no codigo generado con IA.
+
+Caso: un servicio de catering.
+  Cada tradicion culinaria es una familia de productos que no se puede mezclar:
+  entrada, plato fuerte, postre y bebida. Una entrada japonesa con un postre
+  italiano y una limonada de panela no es un menu, es un accidente. La cocina
+  (la fabrica abstracta) es la unica forma de conseguir un plato, asi que los
+  cuatro que entrega siempre pegan entre si.
+
+  El agente hace las dos cosas que hacia una persona: lee el pedido y elige la
+  cocina, y despues decide cada plato dentro de las reglas que el producto ya
+  trae. Nadie le dicta nada; el pedido es lo unico que escribe un humano.
+
+Correr:
+  javac *.java
+  java Main                       ollama, modelo gemma4:31b-cloud (por defecto)
+  java Main --agente=offline      sin red, por si no hay internet al sustentar
+  java Main --modelo=llama3.2     otro modelo de ollama
+
+  Abre solo en http://localhost:8081
+
+El patron, archivo por archivo:
+
+  Kitchen.java             LA FABRICA ABSTRACTA (4 metodos de creacion)
+  JapaneseKitchen.java     fabrica concreta 1
+  ItalianKitchen.java      fabrica concreta 2
+  ColombianKitchen.java    fabrica concreta 3
+
+  Course.java              lo comun a todo plato
+  AbstractCourse.java      el estado que se repetiria doce veces
+  Starter / MainCourse / Dessert / Drink .java    los 4 productos abstractos
+  <Cocina><Producto>.java  los 12 productos concretos
+
+  Kitchens.java            el unico lugar con un "new XKitchen()"
+  Menu.java                los 4 platos de UNA cocina
+  Order.java               el pedido
+
+La IA:
+
+  Agent.java               la interfaz: elegir cocina y llenar un plato
+  OllamaAgent.java         habla con ollama por /api/generate
+  OfflineAgent.java        el mismo agente sin red, para sustentar
+  Json.java                escribir y leer JSON a mano, sin libreria
+
+La interfaz:
+
+  WebServer.java           com.sun.net.httpserver, viene con el JDK
+  web/                     index.html, app.js, style.css
+  Main.java                main
+
+Por que un agente y no un chatbot: no hay conversacion, no hay turnos ni
+historial y no hay nadie del otro lado esperando una respuesta. Se le pide una
+decision -- una palabra, o tres lineas con formato fijo -- y esa decision entra
+al programa como dato. Si el modelo contesta cualquier otra cosa, el programa
+falla; no negocia.
+
+Por que el agente contesta una palabra y no elige la clase: si el agente pudiera
+instanciar, el patron no serviria de nada -- podria armar el menu mezclado. Lo
+que hace es nombrar una tradicion, y Kitchens.byTradition la traduce a una
+fabrica. Si delira y dice "peruana", revienta ahi mismo en vez de construir un
+menu roto.
+
+Lo que aparecio al conectar el modelo, y que no pasa con datos escritos a mano:
+el agente respeta la CLASE siempre -- eso lo garantiza la fabrica y no hay forma
+de romperlo -- pero puede salirse de la familia por el CONTENIDO. Un
+JapaneseDessert sigue siendo japones para el programa aunque el modelo le meta
+mascarpone. Por eso cada producto concreto lleva su forbidden(), y el menu marca
+en rojo lo que el modelo escribio y no debia. Son dos revisiones distintas:
+sameFamily() la garantiza el patron, violations() no la garantiza nadie.
+
+El boton "que pasa si armo el menu sin la fabrica" arma a mano, con new, un menu
+de tres cocinas. Compila y corre. Lo que lo impide en el resto del programa no
+es una validacion: es que no existe otro camino para crear un plato.
+
+Por que tres lineas con prefijo y no JSON: al modelo de 30B se le va una coma y
+no queda nada que parsear. "NOMBRE:" al principio de la linea lo cumple siempre,
+y si escribe texto de mas alrededor se ignora solo.
