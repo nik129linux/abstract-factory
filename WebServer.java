@@ -18,8 +18,10 @@ import java.util.Map;
  *
  * com.sun.net.httpserver viene con el JDK, asi que aca tampoco hay libreria.
  *
- * Los platos se llenan de a uno, un request por plato, para que se vea al
- * agente trabajando en vez de que aparezca el menu completo de golpe.
+ * Un solo endpoint hace todo el trabajo: /api/say. La pagina manda lo que
+ * escribio el cliente y recibe el estado entero -- que decidio el mesero, como
+ * quedo el pedido, el combo con su precio, y el registro de lo que el chef
+ * acepto y rechazo mientras cocinaba.
  */
 public class WebServer {
 
@@ -27,13 +29,13 @@ public class WebServer {
     private final Path webDir;
     private final Agent agent;
 
-    private Menu menu;     // el menu en curso
-    private Order order;   // el pedido que lo origino
+    private final Conversation talk;
 
     public WebServer(int port, Path webDir, Agent agent) {
         this.port = port;
         this.webDir = webDir;
         this.agent = agent;
+        this.talk = new Conversation(agent);
     }
 
     public void start() throws IOException {
@@ -51,11 +53,9 @@ public class WebServer {
 
         try {
             switch (action) {
-                case "state":  send(exchange, 200, state());          return;
-                case "choose": send(exchange, 200, choose(params));   return;
-                case "fill":   send(exchange, 200, fill(params));     return;
-                case "check":  send(exchange, 200, check());          return;
-                case "mixed":  send(exchange, 200, mixed());          return;
+                case "state": send(exchange, 200, state());  return;
+                case "say":   send(exchange, 200, say(params)); return;
+                case "mixed": send(exchange, 200, mixed());  return;
                 default: send(exchange, 404, Json.object(Json.field("error", "no existe " + action)));
             }
         } catch (Exception e) {
@@ -70,85 +70,63 @@ public class WebServer {
                 Json.field("traditions", Kitchens.traditions()));
     }
 
-    /**
-     * Paso 1. El agente lee el pedido y contesta una palabra; esa palabra elige
-     * la fabrica, y la fabrica sola arma los cuatro platos vacios.
-     */
-    private String choose(Map<String, String> params) {
-        Order order = Order.of(
-                params.getOrDefault("diners", "2"),
-                params.getOrDefault("restrictions", ""),
-                params.getOrDefault("occasion", ""),
-                params.getOrDefault("notes", ""));
+    /** Un turno del cliente. Todo el sistema cabe en esta llamada. */
+    private String say(Map<String, String> params) {
+        String text = params.getOrDefault("text", "").trim();
+        if (text.isEmpty()) {
+            throw new IllegalArgumentException("no escribiste nada");
+        }
+        talk.say(text);
 
-        String answer = agent.chooseTradition(order, Kitchens.traditions());
-        Kitchen kitchen = Kitchens.byTradition(answer);
-        menu = new Menu(kitchen);
-        this.order = order;
+        Order order = talk.order();
+        Combo combo = talk.combo();
 
-        List<String> slots = new ArrayList<>();
-        for (int n = 1; n <= menu.size(); n++) {
-            Course course = menu.course(n);
-            slots.add(Json.object(
+        String comboJson = combo == null ? "null" : Json.object(
+                Json.field("tradition", combo.kitchen().tradition()),
+                Json.field("factory", combo.kitchen().getClass().getSimpleName()),
+                Json.field("accent", combo.kitchen().accent()),
+                Json.field("sameFamily", combo.sameFamily()),
+                Json.field("used", combo.traditionsUsed()),
+                Json.field("costPerPerson", combo.costPerPerson()),
+                Json.field("total", combo.total(order)),
+                Json.field("budget", order.budget()),
+                Json.field("overBudget", order.budget() > 0 && combo.costPerPerson() > order.budget()),
+                "\"courses\":[" + String.join(",", courses(combo)) + "]");
+
+        return Json.object(
+                Json.field("action", talk.lastAction()),
+                Json.field("say", talk.lastSay()),
+                Json.field("order", order.describe()),
+                Json.field("complete", order.isComplete()),
+                Json.field("log", talk.log()),
+                "\"combo\":" + comboJson);
+    }
+
+    private List<String> courses(Combo combo) {
+        List<String> out = new ArrayList<>();
+        for (int n = 1; n <= combo.size(); n++) {
+            Course course = combo.course(n);
+            out.add(Json.object(
                     Json.field("n", n),
                     Json.field("role", course.role()),
-                    Json.field("rules", course.rules()),
-                    Json.field("forbidden", course.forbidden())));
+                    Json.field("clazz", course.getClass().getSimpleName()),
+                    Json.field("name", course.name()),
+                    Json.field("ingredients", course.ingredients()),
+                    Json.field("steps", course.steps()),
+                    Json.field("cost", course.cost()),
+                    Json.field("violations", course.violations()),
+                    Json.field("missing", course.missing())));
         }
-
-        return Json.object(
-                Json.field("answer", answer),
-                Json.field("tradition", kitchen.tradition()),
-                Json.field("accent", kitchen.accent()),
-                Json.field("factory", kitchen.getClass().getSimpleName()),
-                Json.field("order", order.describe()),
-                Json.field("prompt", agent.lastPrompt()),
-                Json.field("reply", agent.lastReply()),
-                "\"courses\":[" + String.join(",", slots) + "]");
-    }
-
-    /** Paso 2, una vez por plato. */
-    private String fill(Map<String, String> params) {
-        if (menu == null) {
-            throw new IllegalStateException("todavia no hay pedido");
-        }
-        int n = Integer.parseInt(params.getOrDefault("n", "1"));
-        Course course = menu.course(n);
-        agent.fill(course, order);
-
-        return Json.object(
-                Json.field("n", n),
-                Json.field("role", course.role()),
-                Json.field("tradition", course.tradition()),
-                Json.field("clazz", course.getClass().getSimpleName()),
-                Json.field("name", course.name()),
-                Json.field("ingredients", course.ingredients()),
-                Json.field("steps", course.steps()),
-                Json.field("violations", course.violations()),
-                Json.field("prompt", agent.lastPrompt()),
-                Json.field("reply", agent.lastReply()),
-                Json.field("done", n == menu.size()));
-    }
-
-    /** Paso 3. Las dos revisiones, que no son la misma. */
-    private String check() {
-        if (menu == null) {
-            throw new IllegalStateException("todavia no hay pedido");
-        }
-        return Json.object(
-                Json.field("sameFamily", menu.sameFamily()),
-                Json.field("tradition", menu.kitchen().tradition()),
-                Json.field("used", menu.traditionsUsed()),
-                Json.field("violations", menu.violations()));
+        return out;
     }
 
     /**
-     * El contraejemplo: un menu armado a mano con new de tres cocinas distintas.
-     * Compila igual. Lo que lo impide en el resto del programa no es una
-     * validacion, es que no existe otro camino para crear un plato.
+     * El contraejemplo: un combo armado a mano con new de tres cocinas
+     * distintas. Compila igual. Lo que lo impide en el resto del programa no es
+     * una validacion, es que no existe otro camino para crear un plato.
      */
     private String mixed() {
-        Menu byHand = Menu.mixedByHand();
+        Combo byHand = Combo.mixedByHand();
         List<String> classes = new ArrayList<>();
         for (Course course : byHand.courses()) {
             classes.add(course.getClass().getSimpleName());

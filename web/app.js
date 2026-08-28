@@ -1,14 +1,12 @@
-// La pagina no sabe nada de patrones: pide, muestra y deja que Java decida.
+// La pagina no sabe nada de patrones: manda lo que escribe el cliente y muestra
+// lo que el programa decidio y construyo.
 
 const $ = (id) => document.getElementById(id);
 
 async function api(action, params = {}) {
-  const url = "/api/" + action + "?" + new URLSearchParams(params);
-  const res = await fetch(url);
+  const res = await fetch("/api/" + action + "?" + new URLSearchParams(params));
   const data = await res.json();
-  if (!res.ok || data.error) {
-    throw new Error(data.error || ("HTTP " + res.status));
-  }
+  if (!res.ok || data.error) throw new Error(data.error || ("HTTP " + res.status));
   return data;
 }
 
@@ -17,155 +15,124 @@ function fail(e) {
   $("err").classList.remove("hidden");
 }
 
-function clearFail() {
-  $("err").classList.add("hidden");
+api("state").then((s) => { $("agent").textContent = s.agent; }).catch(fail);
+
+// ------------------------------------------------------------------- el hilo
+
+function bubble(who, text) {
+  const div = document.createElement("div");
+  div.className = "msg " + who;
+  div.textContent = text;
+  $("thread").appendChild(div);
+  $("thread").scrollTop = $("thread").scrollHeight;
+  return div;
 }
 
-// ------------------------------------------------------------------- arranque
+async function send(text) {
+  if (!text.trim()) return;
+  $("err").classList.add("hidden");
+  $("text").value = "";
+  $("send").disabled = true;
 
-api("state").then((s) => {
-  $("agent").textContent = s.agent;
-}).catch(fail);
-
-// -------------------------------------------------------------- 1: el pedido
-
-$("send").addEventListener("click", async () => {
-  clearFail();
-  const button = $("send");
-  button.disabled = true;
-  button.textContent = "el agente esta leyendo el pedido…";
+  bubble("me", text);
+  const waiting = bubble("bot pending", "el mesero está pensando…");
 
   try {
-    const pick = await api("choose", {
-      diners: $("diners").value,
-      occasion: $("occasion").value,
-      restrictions: $("restrictions").value,
-      notes: $("notes").value,
-    });
-    showChoice(pick);
-    await fillAll(pick.courses);
-    await showCheck();
+    const turn = await api("say", { text });
+    waiting.remove();
+    bubble("bot", turn.say);
+    markAction(turn.action);
+    if (turn.log.length) renderLog(turn.log);
+    if (turn.combo) renderCombo(turn.combo);
   } catch (e) {
+    waiting.remove();
     fail(e);
   } finally {
-    button.disabled = false;
-    button.textContent = "Mandar otro pedido";
+    $("send").disabled = false;
+    $("text").focus();
   }
-});
-
-// ------------------------------------------------------------ 2: la decision
-
-function showChoice(pick) {
-  $("tradition").textContent = "cocina " + pick.tradition;
-  $("factory").textContent = "new " + pick.factory + "()";
-  $("accent").textContent = pick.accent;
-  $("choosePrompt").textContent = pick.prompt.trim();
-  $("chooseReply").textContent = "→ " + pick.reply.trim();
-  $("chooseCard").classList.remove("hidden");
 }
 
-// --------------------------------------------------------------- 3: platos
+$("send").addEventListener("click", () => send($("text").value));
+$("text").addEventListener("keydown", (e) => { if (e.key === "Enter") send($("text").value); });
+document.querySelectorAll(".chip-btn").forEach((b) =>
+  b.addEventListener("click", () => send(b.dataset.say)));
 
-async function fillAll(slots) {
-  const box = $("courses");
-  box.innerHTML = "";
-  $("menuCard").classList.remove("hidden");
-  $("checkCard").classList.add("hidden");
-  $("mixedOut").classList.add("hidden");
+function markAction(action) {
+  document.querySelectorAll(".act").forEach((el) =>
+    el.classList.toggle("on", el.dataset.act === action));
+}
 
-  for (const slot of slots) {
-    const card = document.createElement("div");
-    card.className = "course working";
-    card.innerHTML = `
-      <div class="course-head">
-        <span class="role">${slot.role}</span>
-        <span class="clazz">—</span>
+// ---------------------------------------------- lo que el chef acepto y rechazo
+
+function renderLog(log) {
+  const box = document.createElement("div");
+  box.className = "msg log";
+  box.innerHTML = "<b>la cocina</b>" + log.map((row) => {
+    const [verdict, role, attempt, detail] = row.split("|");
+    const mark = verdict === "ok" ? "✓" : verdict === "no" ? "✗" : "!";
+    return `<div class="row ${verdict}"><span>${mark}</span>
+            <span class="who">${role} · intento ${attempt}</span>
+            <span class="what">${detail}</span></div>`;
+  }).join("");
+  $("thread").appendChild(box);
+  $("thread").scrollTop = $("thread").scrollHeight;
+}
+
+// ------------------------------------------------------------------- el combo
+
+function renderCombo(combo) {
+  const box = document.createElement("div");
+  box.className = "msg combo";
+
+  const dishes = combo.courses.map((c) => `
+    <div class="dish">
+      <div class="dish-head">
+        <span class="role">${c.role}</span>
+        <span class="clazz">${c.clazz}</span>
+        <span class="price">$${c.cost.toLocaleString("es-CO")}</span>
       </div>
-      <p class="rules">regla de la casa: ${slot.rules}</p>
-      <p class="spin">el agente lo esta pensando…</p>`;
-    box.appendChild(card);
+      <p class="name">${c.name || "—"}</p>
+      <p class="ing">${c.ingredients.join(" · ")}</p>
+      ${c.violations.length ? `<p class="flag">se salió de la familia: ${c.violations.join(", ")}</p>` : ""}
+      ${c.missing.length ? `<p class="flag">no está en la bodega: ${c.missing.join(", ")}</p>` : ""}
+    </div>`).join("");
 
-    const dish = await api("fill", { n: slot.n });
-    card.className = "course";
-    card.querySelector(".clazz").textContent = dish.clazz;
-    card.querySelector(".spin").remove();
+  box.innerHTML = `
+    <div class="combo-head">
+      <div>
+        <span class="tag">combo ${combo.tradition}</span>
+        <code>new ${combo.factory}()</code>
+      </div>
+      <div class="total ${combo.overBudget ? "over" : ""}">
+        $${combo.costPerPerson.toLocaleString("es-CO")} <small>por persona</small>
+        <div class="sub2">total $${combo.total.toLocaleString("es-CO")}${
+          combo.budget ? " · tope $" + combo.budget.toLocaleString("es-CO") : ""}</div>
+      </div>
+    </div>
+    ${dishes}
+    <p class="guarantee ${combo.sameFamily ? "ok" : "bad"}">
+      ${combo.sameFamily
+        ? "los cuatro salieron de la misma cocina — lo garantiza la fábrica, no una validación"
+        : "familias mezcladas: " + combo.used.join(", ")}
+    </p>`;
 
-    const title = document.createElement("p");
-    title.className = "dish";
-    title.textContent = dish.name;
-    card.insertBefore(title, card.querySelector(".rules"));
-
-    const chips = document.createElement("div");
-    chips.className = "chips";
-    for (const item of dish.ingredients) {
-      const chip = document.createElement("span");
-      chip.className = "chip";
-      chip.textContent = item;
-      chips.appendChild(chip);
-    }
-    card.appendChild(chips);
-
-    const steps = document.createElement("ol");
-    for (const step of dish.steps) {
-      const li = document.createElement("li");
-      li.textContent = step;
-      steps.appendChild(li);
-    }
-    card.appendChild(steps);
-
-    if (dish.violations.length) {
-      const flag = document.createElement("p");
-      flag.className = "flag";
-      flag.textContent = "se salio de la familia: " + dish.violations.join(", ");
-      card.appendChild(flag);
-    }
-
-    const raw = document.createElement("details");
-    raw.innerHTML = `<summary>lo que contesto el modelo</summary>
-      <pre class="reply">${escape(dish.reply.trim())}</pre>`;
-    card.appendChild(raw);
-  }
+  $("thread").appendChild(box);
+  $("thread").scrollTop = $("thread").scrollHeight;
 }
 
-function escape(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// ----------------------------------------------------------- 4: revisiones
-
-async function showCheck() {
-  const check = await api("check");
-  $("checkCard").classList.remove("hidden");
-
-  const family = $("familyResult");
-  family.textContent = check.sameFamily
-    ? "si — las cuatro son " + check.used.join(", ")
-    : "no — " + check.used.join(", ");
-  family.className = "result " + (check.sameFamily ? "ok" : "bad");
-
-  const words = $("wordResult");
-  words.textContent = check.violations.length
-    ? "no — " + check.violations.join("; ")
-    : "si — ninguna palabra prohibida";
-  words.className = "result " + (check.violations.length ? "bad" : "ok");
-}
+// ------------------------------------------------------------- contraejemplo
 
 $("mixed").addEventListener("click", async () => {
-  clearFail();
   try {
     const bad = await api("mixed");
     const out = $("mixedOut");
     out.classList.remove("hidden");
     out.innerHTML = `
-      <p>Armado a mano con <code>new</code>, sin pasar por ninguna fábrica.
-         Compila, corre, y sale esto:</p>
+      <p>Armado a mano con <code>new</code>, sin pasar por ninguna fábrica. Compila y corre:</p>
       <ul>${bad.classes.map((c, i) => `<li>${c} → ${bad.used[i]}</li>`).join("")}</ul>
-      <p style="margin-top:.6rem">Un menú japonés con pasta y limonada de panela.
-         Lo que lo impide arriba no es una validación: es que sin la fábrica no
-         hay forma de crear un plato.</p>`;
-  } catch (e) {
-    fail(e);
-  }
+      <p style="margin-top:.6rem">Un combo japonés con pasta y limonada de panela.
+         Lo que lo impide arriba no es una validación: es que sin la fábrica no hay
+         forma de crear un plato.</p>`;
+  } catch (e) { fail(e); }
 });

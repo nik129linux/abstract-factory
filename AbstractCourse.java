@@ -65,6 +65,31 @@ public abstract class AbstractCourse implements Course {
         return found;
     }
 
+    /**
+     * Lo que el modelo se invento. Es motivo de rechazo: si no esta en la
+     * bodega, no se puede cocinar ni cotizar.
+     */
+    @Override
+    public List<String> missing() {
+        List<String> gone = new ArrayList<>();
+        for (String item : ingredients) {
+            if (!Pantry.get().has(item)) {
+                gone.add(item);
+            }
+        }
+        return gone;
+    }
+
+    /** El precio del plato es la suma de sus ingredientes, y nada mas. */
+    @Override
+    public int cost() {
+        int total = 0;
+        for (String item : ingredients) {
+            total += Pantry.get().price(item);
+        }
+        return total;
+    }
+
     @Override
     public String toString() {
         return role() + " " + tradition() + ": " + (isFilled() ? name : "(vacia)");

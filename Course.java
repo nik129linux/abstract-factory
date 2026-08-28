@@ -34,4 +34,10 @@ public interface Course {
 
     /** Las prohibidas que el agente si uso. Vacio = la familia aguanto. */
     List<String> violations();
+
+    /** Lo que el agente nombro y no existe en la despensa. */
+    List<String> missing();
+
+    /** COP por persona. Sale de sumar la despensa, nunca del modelo. */
+    int cost();
 }

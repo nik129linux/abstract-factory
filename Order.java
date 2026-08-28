@@ -1,37 +1,55 @@
 /**
- * El pedido que entra por la interfaz. Es lo unico que escribe el humano en
- * todo el flujo: de aca en adelante decide el agente.
+ * El pedido. Se llena de a pedazos durante la conversacion: el mesero saca lo
+ * que puede de cada turno y pregunta por lo que falta.
  *
- * Es un record porque no tiene comportamiento propio -- solo carga datos y se
- * describe a si mismo para el prompt.
+ * Es inmutable a proposito -- cada turno produce un pedido nuevo en vez de
+ * pisar el anterior, asi que se puede mostrar como fue creciendo.
  */
-public record Order(int diners, String restrictions, String occasion, String notes) {
+public record Order(int diners, int budget, String occasion, String restrictions) {
 
-    public static Order of(String diners, String restrictions, String occasion, String notes) {
-        int n;
-        try {
-            n = Integer.parseInt(diners.trim());
-        } catch (RuntimeException e) {
-            n = 2;
+    public static Order empty() {
+        return new Order(0, 0, "", "");
+    }
+
+    /** Solo pisa lo que venga con valor: el turno 3 no borra lo del turno 1. */
+    public Order merge(int newDiners, int newBudget, String newOccasion, String newRestrictions) {
+        return new Order(
+                newDiners > 0 ? newDiners : diners,
+                newBudget > 0 ? newBudget : budget,
+                newOccasion.isBlank() ? occasion : newOccasion.trim(),
+                newRestrictions.isBlank() ? restrictions : newRestrictions.trim());
+    }
+
+    /** Lo minimo para poder cocinar y cotizar. */
+    public boolean isComplete() {
+        return diners > 0 && budget > 0;
+    }
+
+    public String missing() {
+        if (diners <= 0 && budget <= 0) {
+            return "cuantos son y cuanto quieren gastar por persona";
         }
-        return new Order(Math.max(1, n), text(restrictions), text(occasion), text(notes));
+        if (diners <= 0) {
+            return "cuantos comensales son";
+        }
+        if (budget <= 0) {
+            return "cuanto quieren gastar por persona";
+        }
+        return "";
     }
 
-    private static String text(String value) {
-        return value == null ? "" : value.trim();
-    }
-
-    /** Como se le cuenta el pedido al modelo. Una linea, sin adornos. */
+    /** Como se le cuenta el pedido al modelo. */
     public String describe() {
-        StringBuilder sb = new StringBuilder(diners + " comensales");
+        StringBuilder sb = new StringBuilder();
+        sb.append(diners > 0 ? diners + " comensales" : "comensales sin definir");
+        if (budget > 0) {
+            sb.append(", hasta $").append(budget).append(" por persona");
+        }
         if (!occasion.isEmpty()) {
             sb.append(", ocasion: ").append(occasion);
         }
         if (!restrictions.isEmpty()) {
             sb.append(", restricciones: ").append(restrictions);
-        }
-        if (!notes.isEmpty()) {
-            sb.append(", nota del cliente: ").append(notes);
         }
         return sb.toString();
     }

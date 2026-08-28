@@ -1,33 +1,21 @@
-import java.util.List;
-
 /**
- * EL AGENTE. La pieza que reemplaza al humano.
+ * La boca del modelo, y nada mas. Recibe un prompt y devuelve texto.
  *
- * Hace las dos cosas que antes hacia una persona: elegir la tradicion que le
- * sirve al pedido, y decidir el plato concreto dentro de las reglas que el
- * producto de la fabrica ya trae puestas.
+ * Los que deciden son los dos roles que hay encima: Waiter (el mesero, el unico
+ * que habla con el cliente) y Chef (que no habla con nadie y construye contra la
+ * fabrica y la despensa). Que los dos usen la misma interfaz es lo que permite
+ * cambiar el modelo por el agente offline sin que ninguno de los dos se entere.
  *
- * Lo que NO hace, y es deliberado: no elige la clase. Contesta una palabra y
- * Kitchens.byTradition la traduce a una fabrica. Si el agente delirara y
- * contestara "peruana", el programa falla fuerte en vez de armar un menu roto.
- *
- * Tampoco conversa. No hay historial, no hay turnos, no hay usuario del otro
- * lado esperando una respuesta: se le pide una decision y devuelve una decision.
+ * La primera linea de todo prompt dice "ROL: ..." para que el agente offline
+ * sepa que le estan pidiendo sin tener que entender el texto.
  */
 public interface Agent {
 
-    /** Como se presenta en la interfaz. */
     String name();
 
-    /** Paso 1: mira el pedido y contesta con una de las tradiciones. */
-    String chooseTradition(Order order, List<String> available);
+    String ask(String prompt);
 
-    /** Paso 2: llena un plato respetando course.rules(). */
-    void fill(Course course, Order order);
-
-    /** Lo ultimo que se le mando al modelo, tal cual. */
     String lastPrompt();
 
-    /** Lo ultimo que contesto, sin limpiar. La interfaz lo muestra. */
     String lastReply();
 }

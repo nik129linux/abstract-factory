@@ -3,20 +3,13 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
- * El agente de verdad: habla con un modelo corriendo detras de Ollama.
+ * El modelo de verdad, detras de ollama.
  *
  * java.net.http viene con el JDK desde Java 11, asi que sigue sin haber
  * libreria. Ollama expone /api/generate y con "stream": false contesta un solo
  * JSON plano, que es justo lo que Json.value sabe leer.
- *
- * El formato de respuesta que se le pide son tres lineas con prefijo, no JSON.
- * Un modelo de 30B se equivoca escribiendo JSON -- una coma de mas y no queda
- * nada que parsear -- y en cambio "NOMBRE:" al principio de la linea lo cumple
- * siempre, y si sobra texto alrededor se ignora solo.
  */
 public class OllamaAgent implements Agent {
 
@@ -44,64 +37,7 @@ public class OllamaAgent implements Agent {
     }
 
     @Override
-    public String chooseTradition(Order order, List<String> available) {
-        String prompt = """
-                Sos el jefe de cocina de un servicio de catering.
-                Llego este pedido: %s
-
-                Cocinas disponibles: %s
-
-                Elegi la que mejor le sirve al pedido.
-                Responde SOLO con una de esas palabras, en minuscula, sin explicar nada.
-                """.formatted(order.describe(), String.join(", ", available));
-        return ask(prompt).trim();
-    }
-
-    @Override
-    public void fill(Course course, Order order) {
-        String prompt = """
-                Sos el jefe de cocina de un servicio de catering de cocina %s.
-                Pedido: %s
-
-                Te toca esta parte del menu: %s.
-                Reglas de la casa que no podes romper: %s
-                Nunca uses: %s
-
-                Responde exactamente en tres lineas, sin titulos ni comentarios:
-                NOMBRE: <nombre del plato>
-                INGREDIENTES: <ingrediente> | <ingrediente> | <ingrediente>
-                PASOS: <paso> | <paso> | <paso>
-                """.formatted(
-                        course.tradition(),
-                        order.describe(),
-                        course.role(),
-                        course.rules(),
-                        String.join(", ", course.forbidden()));
-
-        String reply = ask(prompt);
-        course.fill(line(reply, "NOMBRE"),
-                    split(line(reply, "INGREDIENTES")),
-                    split(line(reply, "PASOS")));
-
-        if (!course.isFilled()) {
-            throw new IllegalStateException(
-                    "el modelo no devolvio el formato pedido para " + course.role());
-        }
-    }
-
-    @Override
-    public String lastPrompt() {
-        return lastPrompt;
-    }
-
-    @Override
-    public String lastReply() {
-        return lastReply;
-    }
-
-    // ------------------------------------------------------------------ HTTP
-
-    private String ask(String prompt) {
+    public String ask(String prompt) {
         lastPrompt = prompt;
         String body = Json.object(
                 Json.field("model", model),
@@ -130,27 +66,13 @@ public class OllamaAgent implements Agent {
         }
     }
 
-    // --------------------------------------------------------------- PARSING
-
-    /** La linea que empieza con el prefijo, sin el prefijo. */
-    private static String line(String reply, String prefix) {
-        for (String raw : reply.split("\n")) {
-            String clean = raw.replace("*", "").trim();
-            if (clean.toUpperCase().startsWith(prefix + ":")) {
-                return clean.substring(prefix.length() + 1).trim();
-            }
-        }
-        return "";
+    @Override
+    public String lastPrompt() {
+        return lastPrompt;
     }
 
-    private static List<String> split(String value) {
-        List<String> parts = new ArrayList<>();
-        for (String piece : value.split("\\|")) {
-            String clean = piece.trim();
-            if (!clean.isEmpty()) {
-                parts.add(clean);
-            }
-        }
-        return parts;
+    @Override
+    public String lastReply() {
+        return lastReply;
     }
 }
