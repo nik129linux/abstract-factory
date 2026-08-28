@@ -1,6 +1,6 @@
 import java.util.List;
 
-/** Producto concreto: plato fuerte italiano. */
+/** Concrete product: Italian main course. */
 public class ItalianMain extends AbstractCourse implements MainCourse {
 
     @Override
@@ -10,8 +10,7 @@ public class ItalianMain extends AbstractCourse implements MainCourse {
 
     @Override
     public String rules() {
-        return "pasta, risotto o horno; la salsa se hace con lo que ya esta en el plato, "
-             + "el queso se ralla al final";
+        return "pasta, risotto or oven; the sauce is made from what is already on the plate, cheese grated at the end";
     }
 
     @Override

@@ -1,13 +1,12 @@
 import java.util.List;
 
-/** Fabrica concreta 1 de 3. */
+/** Concrete factory. */
 public class JapaneseKitchen implements Kitchen {
 
-    public static final String TRADITION = "japonesa";
+    public static final String TRADITION = "japanese";
 
-    /** Lo que las cuatro clases de esta familia tienen prohibido, en un lugar. */
-    static final List<String> FORBIDDEN =
-            List.of("queso", "crema de leche", "mantequilla", "chorizo", "arepa", "aji");
+    /** What all four classes of this family are barred from, in one place. */
+    static final List<String> FORBIDDEN = List.of("cheese", "cream", "butter", "chorizo", "arepa", "curry");
 
     @Override
     public String tradition() {
@@ -16,8 +15,7 @@ public class JapaneseKitchen implements Kitchen {
 
     @Override
     public String accent() {
-        return "cocina japonesa: producto crudo o apenas cocido, dashi, umami, "
-             + "porciones pequenas, sin lacteos y sin picante fuerte";
+        return "japanese cooking: raw or barely cooked produce, dashi, umami, small portions, no dairy and no heavy heat";
     }
 
     @Override

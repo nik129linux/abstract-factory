@@ -51,7 +51,7 @@ h3 { margin: 0 0 .4rem; font-size: .9rem; }
 
 .hint { margin: 0 0 1rem; color: var(--dim); font-size: .88rem; }
 
-/* ------------------------------------------------------------------ pedido */
+/* ------------------------------------------------------------------- order */
 
 .form {
   display: grid;
@@ -134,7 +134,7 @@ pre {
 }
 pre.reply { border-left-color: var(--hot); color: var(--ink); }
 
-/* ------------------------------------------------------------------ platos */
+/* ----------------------------------------------------------------- courses */
 
 .course {
   border: 1px solid var(--line);
@@ -164,7 +164,7 @@ ol li { margin-bottom: .2rem; }
 .flag { color: var(--bad); font-size: .82rem; margin: .6rem 0 0; }
 .spin { color: var(--hot); font-size: .85rem; margin: .5rem 0 0; }
 
-/* --------------------------------------------------------------- revisiones */
+/* ------------------------------------------------------------------ checks */
 
 .checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; }
 .check { border: 1px solid var(--line); border-radius: 8px; padding: .9rem 1rem; }
@@ -188,7 +188,7 @@ ol li { margin-bottom: .2rem; }
 
 .hidden { display: none; }
 
-/* --------------------------------------------------------------- el hilo */
+/* -------------------------------------------------------------- the thread */
 
 .thread {
   display: flex;
@@ -230,7 +230,7 @@ ol li { margin-bottom: .2rem; }
 }
 .chip-btn:hover { color: var(--ink); border-color: var(--hot); }
 
-/* ---------------------------------------------------------------- el combo */
+/* ------------------------------------------------------------------- combo */
 
 .combo-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: .8rem; }
 .tag { font-size: .95rem; font-weight: 700; color: var(--hot); text-transform: capitalize; margin-right: .5rem; }

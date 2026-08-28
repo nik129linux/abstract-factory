@@ -3,19 +3,19 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Lee las respuestas del modelo.
+ * Reads the model's answers.
  *
- * El formato es lineas con prefijo -- NOMBRE:, ACCION:, PRECIO: -- y no JSON.
- * A un modelo de 30B se le va una coma y no queda nada que parsear; un prefijo
- * al principio de la linea lo cumple siempre, y si escribe texto de mas
- * alrededor se ignora solo.
+ * The format is prefixed lines -- NAME:, ACTION:, STEPS: -- and not JSON. A 30B
+ * model drops a comma and then there is nothing left to parse; a prefix at the
+ * start of a line it always gets right, and any extra text around it is
+ * ignored for free.
  */
 public final class Reply {
 
     private Reply() {
     }
 
-    /** La linea que empieza con el prefijo, sin el prefijo. "" si no esta. */
+    /** The line starting with the prefix, without the prefix. "" if absent. */
     public static String line(String reply, String prefix) {
         for (String raw : String.valueOf(reply).split("\n")) {
             String clean = raw.replace("*", "").replace("#", "").trim();
@@ -27,7 +27,7 @@ public final class Reply {
         return "";
     }
 
-    /** Una linea de "a | b | c" partida en pedazos. */
+    /** A line of "a | b | c" split into pieces. */
     public static List<String> split(String value) {
         List<String> parts = new ArrayList<>();
         for (String piece : String.valueOf(value).split("\\|")) {
@@ -39,7 +39,7 @@ public final class Reply {
         return parts;
     }
 
-    /** El primer entero que aparezca. 0 si no hay. Para precios y comensales. */
+    /** The first integer in the text. 0 if there is none. For prices and counts. */
     public static int number(String value) {
         String digits = String.valueOf(value).replaceAll("[^0-9]", "");
         if (digits.isEmpty()) {

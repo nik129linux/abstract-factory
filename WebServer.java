@@ -13,15 +13,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Sirve la interfaz del navegador. El patron vive en las clases de Java; esto
- * es solo el cable entre ellas y la pagina.
+ * Serves the browser interface. The pattern lives in the Java classes; this is
+ * only the wiring between them and the page.
  *
- * com.sun.net.httpserver viene con el JDK, asi que aca tampoco hay libreria.
+ * com.sun.net.httpserver ships with the JDK, so there is no library here either.
  *
- * Un solo endpoint hace todo el trabajo: /api/say. La pagina manda lo que
- * escribio el cliente y recibe el estado entero -- que decidio el mesero, como
- * quedo el pedido, el combo con su precio, y el registro de lo que el chef
- * acepto y rechazo mientras cocinaba.
+ * A single endpoint does all the work: /api/say. The page sends whatever the
+ * client typed and gets the whole state back -- what the waiter decided, how
+ * the order stands, the combo with its price, and the record of what the chef
+ * accepted and rejected while cooking.
  */
 public class WebServer {
 
@@ -56,7 +56,7 @@ public class WebServer {
                 case "state": send(exchange, 200, state());  return;
                 case "say":   send(exchange, 200, say(params)); return;
                 case "mixed": send(exchange, 200, mixed());  return;
-                default: send(exchange, 404, Json.object(Json.field("error", "no existe " + action)));
+                default: send(exchange, 404, Json.object(Json.field("error", "no such action: " + action)));
             }
         } catch (Exception e) {
             String message = e.getMessage() == null ? e.toString() : e.getMessage();
@@ -70,11 +70,11 @@ public class WebServer {
                 Json.field("traditions", Kitchens.traditions()));
     }
 
-    /** Un turno del cliente. Todo el sistema cabe en esta llamada. */
+    /** One turn from the client. The whole system fits in this call. */
     private String say(Map<String, String> params) {
         String text = params.getOrDefault("text", "").trim();
         if (text.isEmpty()) {
-            throw new IllegalArgumentException("no escribiste nada");
+            throw new IllegalArgumentException("you typed nothing");
         }
         talk.say(text);
 
@@ -121,9 +121,10 @@ public class WebServer {
     }
 
     /**
-     * El contraejemplo: un combo armado a mano con new de tres cocinas
-     * distintas. Compila igual. Lo que lo impide en el resto del programa no es
-     * una validacion, es que no existe otro camino para crear un plato.
+     * The counter-example: a combo built by hand with new, out of three
+     * different kitchens. It compiles all the same. What prevents it everywhere
+     * else is not a validation, it is that there is no other way to create a
+     * dish.
      */
     private String mixed() {
         Combo byHand = Combo.mixedByHand();

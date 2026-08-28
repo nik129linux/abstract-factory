@@ -1,6 +1,6 @@
 import java.util.List;
 
-/** Producto concreto: entrada japonesa. */
+/** Concrete product: Japanese starter. */
 public class JapaneseStarter extends AbstractCourse implements Starter {
 
     @Override
@@ -10,8 +10,7 @@ public class JapaneseStarter extends AbstractCourse implements Starter {
 
     @Override
     public String rules() {
-        return "porcion chica para abrir el apetito, base de dashi o vinagre de arroz, "
-             + "se sirve fria o tibia, nada frito pesado";
+        return "a small plate to open the appetite, dashi or rice vinegar as a base, served cold or warm, nothing deep fried";
     }
 
     @Override

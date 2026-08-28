@@ -6,51 +6,51 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * LA DESPENSA. Singleton -- hay una sola bodega, como el dispensador de turnos
- * del taller 1.
+ * THE PANTRY. A singleton -- there is only one warehouse, like the ticket
+ * dispenser in assignment 1.
  *
- * Es la pieza que hace que el modelo choque con algo real. Sin esto el agente
- * escribe texto y nadie lo contradice; con esto cada ingrediente que nombra
- * tiene que existir aca y tiene un precio, y ESE precio es el del combo.
+ * This is the piece that makes the model hit something real. Without it the
+ * agent writes text and nobody contradicts it; with it every ingredient it
+ * names has to exist here and carries a price, and THAT price is the combo's.
  *
- * El precio nunca sale del modelo. Un chatbot te diria "eso le sale como
- * doscientos mil"; aca se suma la despensa.
+ * The price never comes from the model. A chatbot would say "that runs you
+ * about two hundred thousand"; here the pantry is added up.
  */
 public final class Pantry {
 
     private static final Pantry INSTANCE = new Pantry();
 
-    /** COP por porcion. */
+    /** COP per portion. */
     private final Map<String, Integer> prices = new LinkedHashMap<>();
     private final Map<String, List<String>> byTradition = new LinkedHashMap<>();
 
     private Pantry() {
         stock(JapaneseKitchen.TRADITION,
-                "arroz japones", 1200, "fideo soba", 2200, "salmon", 9800, "atun", 11500,
-                "pulpo", 8600, "camaron", 7400, "tofu", 2600, "huevo", 900,
-                "alga nori", 1500, "alga wakame", 1800, "pepino", 700, "rabano", 900,
-                "jengibre", 600, "cebollin", 500, "salsa de soya", 700, "miso", 1400,
-                "vinagre de arroz", 600, "ajonjoli", 500, "matcha", 3200,
-                "frijol rojo dulce", 2100, "arroz glutinoso", 1600, "te verde", 900,
-                "cebada tostada", 700, "sake", 6500, "dashi", 1100, "shiitake", 3400);
+                "japanese rice", 1200, "soba noodles", 2200, "salmon", 9800, "tuna", 11500,
+                "octopus", 8600, "shrimp", 7400, "tofu", 2600, "egg", 900,
+                "nori seaweed", 1500, "wakame seaweed", 1800, "cucumber", 700, "radish", 900,
+                "ginger", 600, "spring onion", 500, "soy sauce", 700, "miso", 1400,
+                "rice vinegar", 600, "sesame", 500, "matcha", 3200,
+                "sweet red bean", 2100, "glutinous rice", 1600, "green tea", 900,
+                "roasted barley", 700, "sake", 6500, "dashi", 1100, "shiitake", 3400);
 
         stock(ItalianKitchen.TRADITION,
-                "espagueti", 1400, "penne", 1400, "arroz arborio", 2400, "harina", 700,
-                "tomate", 1100, "albahaca", 600, "ajo", 300, "cebolla", 500,
-                "aceite de oliva", 1900, "pecorino", 5200, "parmesano", 5600,
+                "spaghetti", 1400, "penne", 1400, "arborio rice", 2400, "flour", 700,
+                "tomato", 1100, "basil", 600, "garlic", 300, "onion", 500,
+                "olive oil", 1900, "pecorino", 5200, "parmesan", 5600,
                 "mozzarella", 4300, "mascarpone", 5900, "prosciutto", 8900,
-                "pan rustico", 1300, "alcaparra", 1200, "aceituna", 1600,
-                "pollo", 6200, "res", 9400, "champinon", 3100, "crema", 2300,
-                "cafe", 1500, "cacao", 1800, "vino tinto", 7800, "limon", 500);
+                "rustic bread", 1300, "caper", 1200, "olive", 1600,
+                "chicken", 6200, "beef", 9400, "mushroom", 3100, "cream", 2300,
+                "coffee", 1500, "cocoa", 1800, "red wine", 7800, "lemon", 500);
 
         stock(ColombianKitchen.TRADITION,
-                "maiz tierno", 1300, "harina de maiz", 800, "platano", 900, "yuca", 800,
-                "papa", 700, "arroz", 800, "frijol", 1600, "arveja", 1400,
-                "pollo", 6200, "res", 9400, "cerdo", 7100, "pescado de rio", 8300,
-                "huevo", 900, "quesito", 3600, "cebolla larga", 500, "tomate", 1100,
-                "cilantro", 400, "guiso", 1200, "aguacate", 2600, "panela", 700,
-                "arequipe", 2900, "breva", 2200, "mora", 1500, "lulo", 1700,
-                "limon", 500, "cafe", 1500, "mazorca", 1400, "costilla", 8700);
+                "sweet corn", 1300, "corn flour", 800, "plantain", 900, "cassava", 800,
+                "potato", 700, "rice", 800, "beans", 1600, "peas", 1400,
+                "chicken", 6200, "beef", 9400, "pork", 7100, "river fish", 8300,
+                "egg", 900, "fresh cheese", 3600, "long onion", 500, "tomato", 1100,
+                "coriander", 400, "sofrito", 1200, "avocado", 2600, "panela", 700,
+                "arequipe", 2900, "fig", 2200, "blackberry", 1500, "lulo", 1700,
+                "lemon", 500, "coffee", 1500, "corn cob", 1400, "ribs", 8700);
     }
 
     public static Pantry get() {
@@ -67,7 +67,7 @@ public final class Pantry {
         byTradition.put(tradition, list);
     }
 
-    /** Lo que se le ofrece al agente en el prompt, con precio. */
+    /** What the agent is offered in the prompt, with prices. */
     public List<String> forTradition(String tradition) {
         return List.copyOf(byTradition.getOrDefault(tradition, List.of()));
     }
@@ -87,16 +87,16 @@ public final class Pantry {
         return match(written) != null;
     }
 
-    /** 0 si no esta. Quien pregunta decide que hacer con eso. */
+    /** 0 when it is not stocked. The caller decides what to do about that. */
     public int price(String written) {
         String key = match(written);
         return key == null ? 0 : prices.get(key);
     }
 
     /**
-     * El modelo escribe "Pulpo cocido en dashi", no "pulpo". Se normaliza y se
-     * busca cual ingrediente de la despensa aparece adentro de lo que escribio.
-     * Gana el nombre mas largo, para que "cebolla larga" no la resuelva "cebolla".
+     * The model writes "octopus poached in dashi", not "octopus". The text is
+     * normalised and searched for whichever pantry entry appears inside it. The
+     * longest name wins, so that "long onion" is not resolved by "onion".
      */
     public String match(String written) {
         String clean = normalize(written);

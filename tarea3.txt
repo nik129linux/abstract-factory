@@ -1,82 +1,141 @@
-Taller 3 - Abstract Factory con agente de IA
+Taller 3 - Abstract Factory con un agente de IA
 
 Enunciado (clase del 2026-08-28): elegir un caso de estudio propio, distinto de
 los explicados en clase, aplicarle Abstract Factory en Java con interfaz, y que
 el taller use inteligencia artificial de verdad -- un agente que construya los
 objetos solo, no un chatbot y no codigo generado con IA.
+Sumado despues por el profe: que la IA hable con el cliente y arme el combo con
+su precio y su tipo de cocina.
 
 Caso: un servicio de catering.
   Cada tradicion culinaria es una familia de productos que no se puede mezclar:
   entrada, plato fuerte, postre y bebida. Una entrada japonesa con un postre
-  italiano y una limonada de panela no es un menu, es un accidente. La cocina
+  italiano y una limonada de panela no es un combo, es un accidente. La cocina
   (la fabrica abstracta) es la unica forma de conseguir un plato, asi que los
   cuatro que entrega siempre pegan entre si.
 
-  El agente hace las dos cosas que hacia una persona: lee el pedido y elige la
-  cocina, y despues decide cada plato dentro de las reglas que el producto ya
-  trae. Nadie le dicta nada; el pedido es lo unico que escribe un humano.
+Nota: el codigo, los prompts y la interfaz estan en ingles, igual que el taller
+2. Este archivo es lo unico en espanol.
 
 Correr:
   javac *.java
-  java Main                       ollama, modelo gemma4:31b-cloud (por defecto)
-  java Main --agente=offline      sin red, por si no hay internet al sustentar
-  java Main --modelo=llama3.2     otro modelo de ollama
+  java Main                      ollama, modelo gemma4:31b-cloud (por defecto)
+  java Main --agent=offline      sin red, por si no hay internet al sustentar
+  java Main --model=llama3.2     otro modelo de ollama
 
   Abre solo en http://localhost:8081
 
-El patron, archivo por archivo:
+DOS ROLES, UNA SOLA INTERFAZ
 
-  Kitchen.java             LA FABRICA ABSTRACTA (4 metodos de creacion)
-  JapaneseKitchen.java     fabrica concreta 1
-  ItalianKitchen.java      fabrica concreta 2
-  ColombianKitchen.java    fabrica concreta 3
+  Waiter    el unico que habla con el cliente. Arma el pedido, decide la cocina
+            y negocia. No dice precios.
+  Chef      no habla con nadie. Recibe el pedido y construye contra la fabrica
+            y la despensa.
 
-  Course.java              lo comun a todo plato
-  AbstractCourse.java      el estado que se repetiria doce veces
-  Starter / MainCourse / Dessert / Drink .java    los 4 productos abstractos
-  <Cocina><Producto>.java  los 12 productos concretos
+  Los dos usan la misma interfaz Agent, que es solo la boca del modelo
+  (ask(prompt) y ya). Por eso se puede cambiar ollama por el agente offline sin
+  que ninguno de los dos se entere.
 
-  Kitchens.java            el unico lugar con un "new XKitchen()"
-  Menu.java                los 4 platos de UNA cocina
-  Order.java               el pedido
+POR QUE NO ES UN CHATBOT
 
-La IA:
+  1. El mesero no escribe texto libre: en cada turno elige UNA accion de un
+     conjunto cerrado -- ASK, BUILD, ADJUST, REFUSE -- y el programa la ejecuta.
+     Si contesta algo que no es una de las cuatro, el turno se rechaza. No
+     responde: decide que hace el sistema.
 
-  Agent.java               la interfaz: elegir cocina y llenar un plato
-  OllamaAgent.java         habla con ollama por /api/generate
-  OfflineAgent.java        el mismo agente sin red, para sustentar
-  Json.java                escribir y leer JSON a mano, sin libreria
+  2. El precio no lo dice el modelo. Pantry es un Singleton (el mismo patron del
+     taller 1) con los ingredientes y su precio, y el combo se cotiza sumando la
+     bodega. Un chatbot diria "eso le sale como doscientos mil"; esto instancia
+     el combo y lo cotiza. En el prompt se le prohibe al modelo dar precios.
 
-La interfaz:
+  3. El programa manda sobre el modelo. Si el mesero quiere BUILD sin saber
+     cuantos son, Conversation lo degrada a ASK. Si nombra una cocina que no
+     existe, Kitchens.byTradition revienta ahi mismo en vez de armar algo roto.
 
-  WebServer.java           com.sun.net.httpserver, viene con el JDK
-  web/                     index.html, app.js, style.css
-  Main.java                main
+EL BUCLE (lo que separa a un agente de un rellenador de plantillas)
 
-Por que un agente y no un chatbot: no hay conversacion, no hay turnos ni
-historial y no hay nadie del otro lado esperando una respuesta. Se le pide una
-decision -- una palabra, o tres lineas con formato fijo -- y esa decision entra
-al programa como dato. Si el modelo contesta cualquier otra cosa, el programa
-falla; no negocia.
+  El chef propone un plato y el PROGRAMA lo valida. Cinco revisiones que el
+  modelo no puede hacer solo:
 
-Por que el agente contesta una palabra y no elige la clase: si el agente pudiera
-instanciar, el patron no serviria de nada -- podria armar el menu mezclado. Lo
-que hace es nombrar una tradicion, y Kitchens.byTradition la traduce a una
-fabrica. Si delira y dice "peruana", revienta ahi mismo en vez de construir un
-menu roto.
+    - el formato (que devolvio NAME e INGREDIENTS)
+    - que los ingredientes existan en la despensa
+    - que no use lo prohibido por la familia (forbidden())
+    - que no pase del techo de precio
+    - que no repita la proteina de otro plato del combo
 
-Lo que aparecio al conectar el modelo, y que no pasa con datos escritos a mano:
-el agente respeta la CLASE siempre -- eso lo garantiza la fabrica y no hay forma
-de romperlo -- pero puede salirse de la familia por el CONTENIDO. Un
-JapaneseDessert sigue siendo japones para el programa aunque el modelo le meta
-mascarpone. Por eso cada producto concreto lleva su forbidden(), y el menu marca
-en rojo lo que el modelo escribio y no debia. Son dos revisiones distintas:
-sameFamily() la garantiza el patron, violations() no la garantiza nadie.
+  Si falla, se le devuelve el motivo ESCRITO y reintenta. El motivo del rechazo
+  es literalmente el mismo string que entra al prompt del reintento. Maximo 3
+  intentos, y si no lo logra se queda con el mas barato -- no con el ultimo, que
+  puede ser peor que el primero.
 
-El boton "que pasa si armo el menu sin la fabrica" arma a mano, con new, un menu
-de tres cocinas. Compila y corre. Lo que lo impide en el resto del programa no
-es una validacion: es que no existe otro camino para crear un plato.
+  Corrida real:
+    no|Main|1|... -- you already used sake in another dish of the combo, change it
+    ok|Main|2|Donburi de tofu y shiitake al miso ($9800)
 
-Por que tres lineas con prefijo y no JSON: al modelo de 30B se le va una coma y
-no queda nada que parsear. "NOMBRE:" al principio de la linea lo cumple siempre,
-y si escribe texto de mas alrededor se ignora solo.
+  Y con presupuesto apretado el modelo camina el precio hacia abajo solo, porque
+  el rechazo le dice el numero: $13900 -> $8400 -> $5500.
+
+LA RESTRICCION GLOBAL
+
+  El combo entero tiene que caber en el presupuesto por persona. Si no cabe, el
+  chef vuelve sobre el plato mas caro YA COCINADO y lo rehace mas barato. Eso es
+  lo que hace que el agente no sea lineal: revisita trabajo terminado.
+
+EL PATRON, ARCHIVO POR ARCHIVO
+
+  Kitchen.java              LA FABRICA ABSTRACTA (4 metodos de creacion)
+  JapaneseKitchen.java      fabrica concreta 1
+  ItalianKitchen.java       fabrica concreta 2
+  ColombianKitchen.java     fabrica concreta 3
+
+  Course.java               lo comun a todo plato
+  AbstractCourse.java       el estado que se repetiria doce veces
+  Starter / MainCourse / Dessert / Drink .java   los 4 productos abstractos
+  <Cocina><Producto>.java   los 12 productos concretos
+
+  Kitchens.java             el unico lugar con un "new XKitchen()"
+  Combo.java                los 4 platos de UNA cocina, con su precio
+  Order.java                el pedido, que se llena de a pedazos
+  Pantry.java               la despensa, Singleton, la que pone los precios
+
+LA IA
+
+  Agent.java                la boca del modelo: ask(prompt) y nada mas
+  Waiter.java               el rol que habla, con su conjunto cerrado de acciones
+  Chef.java                 el rol que construye, con el bucle de rechazo
+  Conversation.java         el estado y quien ejecuta la accion elegida
+  OllamaAgent.java          habla con ollama por /api/generate
+  OfflineAgent.java         los dos roles sin red, para sustentar
+  Reply.java                lee las lineas con prefijo
+  Json.java                 escribir y leer JSON a mano, sin libreria
+
+LA INTERFAZ
+
+  WebServer.java            com.sun.net.httpserver, viene con el JDK
+  web/                      index.html, app.js, style.css
+  Main.java                 main
+
+  Un solo endpoint hace todo: /api/say. La pagina manda lo que escribio el
+  cliente y recibe el estado entero.
+
+POR QUE TRES LINEAS CON PREFIJO Y NO JSON
+
+  Al modelo de 30B se le va una coma y no queda nada que parsear. "NAME:" al
+  principio de la linea lo cumple siempre, y si escribe texto de mas alrededor
+  se ignora solo.
+
+EL CONTRAEJEMPLO
+
+  El boton "what if I build the combo without the factory" arma a mano, con new,
+  un combo de tres cocinas. Compila y corre. Lo que lo impide en el resto del
+  programa no es una validacion: es que no existe otro camino para crear un
+  plato.
+
+LO QUE APARECIO AL CONECTAR EL MODELO
+
+  El agente respeta la CLASE siempre -- eso lo garantiza la fabrica y no hay
+  forma de romperlo -- pero se puede salir de la familia por el CONTENIDO. Un
+  JapaneseDessert sigue siendo japones para el programa aunque el modelo le meta
+  mascarpone. Por eso cada producto concreto lleva su forbidden(). Son dos
+  revisiones distintas: sameFamily() la garantiza el patron, violations() no la
+  garantiza nadie.

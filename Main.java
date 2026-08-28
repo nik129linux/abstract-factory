@@ -4,24 +4,24 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Taller 3: Abstract Factory con un agente de IA.
+ * Assignment 3: Abstract Factory driven by an AI agent.
  *
- * Caso de estudio: un servicio de catering. Cada tradicion culinaria es una
- * familia de productos que no se puede mezclar, y el agente es el que elige la
- * familia y decide los platos, sin que nadie se lo dicte.
+ * Case study: a catering service. Each culinary tradition is a family of
+ * products that cannot be mixed, and the agent is the one that talks to the
+ * client, picks the family and decides the dishes, with nobody dictating them.
  *
  *   javac *.java
- *   java Main                        agente con ollama, modelo gemma4:31b-cloud
- *   java Main --agente=offline       sin red, para sustentar sin internet
- *   java Main --modelo=llama3.2      otro modelo de ollama
+ *   java Main                       ollama agent, gemma4:31b-cloud
+ *   java Main --agent=offline       no network, for presenting without internet
+ *   java Main --model=llama3.2      another ollama model
  */
 public class Main {
 
     private static final int PORT = 8081;
 
     public static void main(String[] args) throws Exception {
-        String kind = arg(args, "--agente", "ollama");
-        String model = arg(args, "--modelo", OllamaAgent.DEFAULT_MODEL);
+        String kind = arg(args, "--agent", "ollama");
+        String model = arg(args, "--model", OllamaAgent.DEFAULT_MODEL);
         String host = arg(args, "--host", "http://localhost:11434");
 
         Agent agent = kind.equals("offline")
@@ -32,14 +32,14 @@ public class Main {
         new WebServer(PORT, webDir, agent).start();
 
         String url = "http://localhost:" + PORT;
-        System.out.println("Catering en " + url);
-        System.out.println("Agente: " + agent.name());
-        System.out.println("Ctrl+C para parar.");
+        System.out.println("Catering at " + url);
+        System.out.println("Agent: " + agent.name());
+        System.out.println("Ctrl+C to stop.");
 
         try {
             Desktop.getDesktop().browse(new URI(url));
         } catch (Exception e) {
-            System.out.println("Abri esa direccion a mano.");
+            System.out.println("Open that address by hand.");
         }
     }
 

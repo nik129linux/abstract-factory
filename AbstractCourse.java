@@ -3,12 +3,12 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * La parte que es identica en los doce platos: todos guardan un nombre, unos
- * ingredientes y unos pasos cuando el agente los llena.
+ * The part that is identical in all twelve dishes: they all hold a name, a list
+ * of ingredients and a list of steps once the agent fills them in.
  *
- * Lo que NO esta aca es lo que hace que cada plato sea su propia clase:
- * role(), tradition(), rules() y forbidden(). Eso es el patron; esto es
- * contabilidad, y repetirlo doce veces no probaria nada.
+ * What is NOT here is what makes each dish its own class: role(), tradition(),
+ * rules() and forbidden(). That is the pattern; this is bookkeeping, and
+ * repeating it twelve times would prove nothing.
  */
 public abstract class AbstractCourse implements Course {
 
@@ -50,8 +50,8 @@ public abstract class AbstractCourse implements Course {
     }
 
     /**
-     * El agente contesta texto libre, asi que puede prometer una cosa y escribir
-     * otra. Esto revisa lo que escribio contra la lista negra de la familia.
+     * The agent answers with free text, so it can promise one thing and write
+     * another. This checks what it wrote against the family's blacklist.
      */
     @Override
     public List<String> violations() {
@@ -66,8 +66,8 @@ public abstract class AbstractCourse implements Course {
     }
 
     /**
-     * Lo que el modelo se invento. Es motivo de rechazo: si no esta en la
-     * bodega, no se puede cocinar ni cotizar.
+     * What the model made up. It is grounds for rejection: if it is not in the
+     * warehouse it cannot be cooked and it cannot be priced.
      */
     @Override
     public List<String> missing() {
@@ -80,7 +80,7 @@ public abstract class AbstractCourse implements Course {
         return gone;
     }
 
-    /** El precio del plato es la suma de sus ingredientes, y nada mas. */
+    /** A dish costs the sum of its ingredients, and nothing else. */
     @Override
     public int cost() {
         int total = 0;
@@ -92,6 +92,6 @@ public abstract class AbstractCourse implements Course {
 
     @Override
     public String toString() {
-        return role() + " " + tradition() + ": " + (isFilled() ? name : "(vacia)");
+        return role() + " " + tradition() + ": " + (isFilled() ? name : "(empty)");
     }
 }

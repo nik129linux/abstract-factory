@@ -2,16 +2,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * EL CHEF. No habla con nadie: recibe el pedido y cocina.
+ * THE CHEF. Talks to nobody: it takes the order and cooks.
  *
- * Aca esta el bucle, que es lo que separa a un agente de un rellenador de
- * plantillas: propone un plato, el programa lo VALIDA contra la despensa y
- * contra las prohibiciones de la familia, y si no pasa le devuelve el motivo
- * escrito para que corrija. El motivo del rechazo es literalmente el mismo
- * string que entra al prompt del reintento.
+ * The loop lives here, and the loop is what separates an agent from a template
+ * filler: it proposes a dish, the program VALIDATES it against the pantry, the
+ * family's bans, repeated proteins and a price ceiling, and when it does not
+ * pass the chef hands back the written reason so the model can correct itself.
+ * That reason is literally the same string that goes into the retry's prompt.
  *
- * Despues de MAX_TRIES se rinde y deja el ultimo intento marcado. Un agente que
- * no sabe rendirse cuelga la demo.
+ * After MAX_TRIES it gives up and keeps the cheapest attempt. An agent that
+ * cannot give up hangs the demo.
  */
 public class Chef {
 
@@ -24,7 +24,7 @@ public class Chef {
         this.agent = agent;
     }
 
-    /** Todo lo que paso mientras cocinaba, para que la interfaz lo muestre. */
+    /** Everything that happened while cooking, for the interface to show. */
     public List<String> log() {
         return List.copyOf(log);
     }
@@ -33,7 +33,7 @@ public class Chef {
         log.clear();
     }
 
-    /** Cocina los platos que falten del combo. */
+    /** Cooks whichever courses of the combo are still empty. */
     public void cook(Combo combo, Order order, String extra) {
         for (int n = 1; n <= combo.size(); n++) {
             if (!combo.course(n).isFilled()) {
@@ -42,21 +42,22 @@ public class Chef {
         }
     }
 
-    /** Un plato, con sus reintentos. */
+    /** One course, with its retries. */
     public void cookOne(Combo combo, int n, Order order, String extra) {
         cookOne(combo, n, order, extra, 0);
     }
 
     /**
-     * cap es el techo de ESTE plato en COP. Sin techo el chef acepta un plato
-     * que cabe solo pero revienta el combo, que es justo lo que pasaba.
+     * cap is THIS course's ceiling in COP. Without a ceiling the chef accepts a
+     * dish that fits on its own but blows up the combo, which is exactly what
+     * used to happen.
      */
     public void cookOne(Combo combo, int n, Order order, String extra, int cap) {
         Course course = combo.course(n);
         String feedback = "";
 
-        // Si ninguno pasa hay que quedarse con el mas barato, no con el ultimo:
-        // el ultimo intento puede ser peor que el primero y el combo empeoraria.
+        // If none of them pass, keep the cheapest and not the last one: the last
+        // attempt can be worse than the first and the combo would get worse.
         String bestName = "";
         List<String> bestIngredients = List.of();
         List<String> bestSteps = List.of();
@@ -86,39 +87,39 @@ public class Chef {
         if (bestCost < Integer.MAX_VALUE && bestCost < course.cost()) {
             course.fill(bestName, bestIngredients, bestSteps);
         }
-        log.add("rendido|" + course.role() + "|" + MAX_TRIES + "|se queda el mas barato: "
+        log.add("gave up|" + course.role() + "|" + MAX_TRIES + "|keeping the cheapest: "
                 + course.name() + " ($" + course.cost() + ")");
     }
 
-    /** La validacion. Ninguna de las tres la puede hacer el modelo por si solo. */
+    /** The validation. The model cannot do any of these five on its own. */
     private String check(Course course, Combo combo, Order order, int cap) {
         if (!course.isFilled()) {
-            return "no devolviste el formato: falta la linea NOMBRE";
+            return "you did not return the format: the NAME line is missing";
         }
         if (course.ingredients().isEmpty()) {
-            return "no devolviste el formato: falta la linea INGREDIENTES";
+            return "you did not return the format: the INGREDIENTS line is missing";
         }
         if (!course.missing().isEmpty()) {
-            return "no hay en la bodega: " + String.join(", ", course.missing())
-                 + ". Usa solo ingredientes de la lista de la despensa";
+            return "not in the warehouse: " + String.join(", ", course.missing())
+                 + ". Use only ingredients from the pantry list";
         }
         if (!course.violations().isEmpty()) {
-            return "eso no es cocina " + course.tradition() + ": "
+            return "that is not " + course.tradition() + " cooking: "
                  + String.join(", ", course.violations());
         }
         int roof = cap > 0 ? cap : order.budget();
         if (roof > 0 && course.cost() > roof) {
-            return "ese plato cuesta $" + course.cost() + " y no puede pasar de $" + roof
-                 + ". Elegi ingredientes mas baratos de la despensa";
+            return "that dish costs $" + course.cost() + " and cannot go over $" + roof
+                 + ". Pick cheaper ingredients from the pantry";
         }
         String repeated = repeats(course, combo);
         if (!repeated.isEmpty()) {
-            return "ya usaste " + repeated + " en otro plato del combo, cambialo";
+            return "you already used " + repeated + " in another dish of the combo, change it";
         }
         return "";
     }
 
-    /** Un combo que repite la proteina en dos platos no es un combo. */
+    /** A combo that repeats the protein in two dishes is not a combo. */
     private String repeats(Course course, Combo combo) {
         for (Course other : combo.courses()) {
             if (other == course || !other.isFilled()) {
@@ -127,7 +128,7 @@ public class Chef {
             for (String item : course.ingredients()) {
                 String key = Pantry.get().match(item);
                 if (key == null || Pantry.get().price(key) < 5000) {
-                    continue;   // solo importa repetir lo caro: la proteina
+                    continue;   // only repeating the expensive things matters: the protein
                 }
                 for (String taken : other.ingredients()) {
                     if (key.equals(Pantry.get().match(taken))) {
@@ -141,35 +142,35 @@ public class Chef {
 
     private void propose(Course course, Combo combo, Order order, String extra, String feedback) {
         String prompt = """
-                ROL: plato
-                Sos el chef de un servicio de catering de cocina %s.
-                Pedido: %s%s
+                ROLE: dish
+                You are the chef of a %s catering service.
+                Order: %s%s
 
-                Te toca esta parte del combo: %s.
-                Reglas de la casa: %s
-                Nunca uses: %s
+                Your part of the combo is: %s.
+                House rules: %s
+                Never use: %s
 
-                Solo podes usar ingredientes de esta despensa, con estos precios:
+                You may only use ingredients from this pantry, at these prices:
                 %s
                 %s
-                Responde exactamente en tres lineas, sin titulos ni comentarios:
-                NOMBRE: <nombre del plato>
-                INGREDIENTES: <ingrediente> | <ingrediente> | <ingrediente>
-                PASOS: <paso> | <paso> | <paso>
+                Answer in exactly three lines, no headings and no commentary:
+                NAME: <name of the dish>
+                INGREDIENTS: <ingredient> | <ingredient> | <ingredient>
+                STEPS: <step> | <step> | <step>
                 """.formatted(
                         course.tradition(),
                         order.describe(),
-                        extra.isEmpty() ? "" : "\nEl cliente pidio ademas: " + extra,
+                        extra.isEmpty() ? "" : "\nThe client also asked for: " + extra,
                         course.role(),
                         course.rules(),
                         String.join(", ", course.forbidden()),
                         Pantry.get().priceList(course.tradition()),
                         feedback.isEmpty() ? ""
-                                : "\nTu intento anterior fue RECHAZADO: " + feedback + "\nCorregilo.\n");
+                                : "\nYour previous attempt was REJECTED: " + feedback + "\nFix it.\n");
 
         String reply = agent.ask(prompt);
-        course.fill(Reply.line(reply, "NOMBRE"),
-                    Reply.split(Reply.line(reply, "INGREDIENTES")),
-                    Reply.split(Reply.line(reply, "PASOS")));
+        course.fill(Reply.line(reply, "NAME"),
+                    Reply.split(Reply.line(reply, "INGREDIENTS")),
+                    Reply.split(Reply.line(reply, "STEPS")));
     }
 }

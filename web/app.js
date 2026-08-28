@@ -1,5 +1,5 @@
-// La pagina no sabe nada de patrones: manda lo que escribe el cliente y muestra
-// lo que el programa decidio y construyo.
+// The page knows nothing about patterns: it sends whatever the client typed and
+// shows what the program decided and built.
 
 const $ = (id) => document.getElementById(id);
 
@@ -17,7 +17,7 @@ function fail(e) {
 
 api("state").then((s) => { $("agent").textContent = s.agent; }).catch(fail);
 
-// ------------------------------------------------------------------- el hilo
+// ------------------------------------------------------------------ the thread
 
 function bubble(who, text) {
   const div = document.createElement("div");
@@ -35,7 +35,7 @@ async function send(text) {
   $("send").disabled = true;
 
   bubble("me", text);
-  const waiting = bubble("bot pending", "el mesero está pensando…");
+  const waiting = bubble("bot pending", "the waiter is thinking…");
 
   try {
     const turn = await api("say", { text });
@@ -63,23 +63,23 @@ function markAction(action) {
     el.classList.toggle("on", el.dataset.act === action));
 }
 
-// ---------------------------------------------- lo que el chef acepto y rechazo
+// ------------------------------------- what the chef accepted and turned down
 
 function renderLog(log) {
   const box = document.createElement("div");
   box.className = "msg log";
-  box.innerHTML = "<b>la cocina</b>" + log.map((row) => {
+  box.innerHTML = "<b>the kitchen</b>" + log.map((row) => {
     const [verdict, role, attempt, detail] = row.split("|");
     const mark = verdict === "ok" ? "✓" : verdict === "no" ? "✗" : "!";
     return `<div class="row ${verdict}"><span>${mark}</span>
-            <span class="who">${role} · intento ${attempt}</span>
+            <span class="who">${role} · try ${attempt}</span>
             <span class="what">${detail}</span></div>`;
   }).join("");
   $("thread").appendChild(box);
   $("thread").scrollTop = $("thread").scrollHeight;
 }
 
-// ------------------------------------------------------------------- el combo
+// ------------------------------------------------------------------- the combo
 
 function renderCombo(combo) {
   const box = document.createElement("div");
@@ -90,38 +90,38 @@ function renderCombo(combo) {
       <div class="dish-head">
         <span class="role">${c.role}</span>
         <span class="clazz">${c.clazz}</span>
-        <span class="price">$${c.cost.toLocaleString("es-CO")}</span>
+        <span class="price">$${c.cost.toLocaleString("en-US")}</span>
       </div>
       <p class="name">${c.name || "—"}</p>
       <p class="ing">${c.ingredients.join(" · ")}</p>
-      ${c.violations.length ? `<p class="flag">se salió de la familia: ${c.violations.join(", ")}</p>` : ""}
-      ${c.missing.length ? `<p class="flag">no está en la bodega: ${c.missing.join(", ")}</p>` : ""}
+      ${c.violations.length ? `<p class="flag">walked out of the family: ${c.violations.join(", ")}</p>` : ""}
+      ${c.missing.length ? `<p class="flag">not stocked in the warehouse: ${c.missing.join(", ")}</p>` : ""}
     </div>`).join("");
 
   box.innerHTML = `
     <div class="combo-head">
       <div>
-        <span class="tag">combo ${combo.tradition}</span>
+        <span class="tag">${combo.tradition} combo</span>
         <code>new ${combo.factory}()</code>
       </div>
       <div class="total ${combo.overBudget ? "over" : ""}">
-        $${combo.costPerPerson.toLocaleString("es-CO")} <small>por persona</small>
-        <div class="sub2">total $${combo.total.toLocaleString("es-CO")}${
-          combo.budget ? " · tope $" + combo.budget.toLocaleString("es-CO") : ""}</div>
+        $${combo.costPerPerson.toLocaleString("en-US")} <small>per person</small>
+        <div class="sub2">total $${combo.total.toLocaleString("en-US")}${
+          combo.budget ? " · cap $" + combo.budget.toLocaleString("en-US") : ""}</div>
       </div>
     </div>
     ${dishes}
     <p class="guarantee ${combo.sameFamily ? "ok" : "bad"}">
       ${combo.sameFamily
-        ? "los cuatro salieron de la misma cocina — lo garantiza la fábrica, no una validación"
-        : "familias mezcladas: " + combo.used.join(", ")}
+        ? "all four came out of the same kitchen — the factory guarantees it, not a validation"
+        : "families mixed: " + combo.used.join(", ")}
     </p>`;
 
   $("thread").appendChild(box);
   $("thread").scrollTop = $("thread").scrollHeight;
 }
 
-// ------------------------------------------------------------- contraejemplo
+// ----------------------------------------------------------- counter-example
 
 $("mixed").addEventListener("click", async () => {
   try {
@@ -129,10 +129,10 @@ $("mixed").addEventListener("click", async () => {
     const out = $("mixedOut");
     out.classList.remove("hidden");
     out.innerHTML = `
-      <p>Armado a mano con <code>new</code>, sin pasar por ninguna fábrica. Compila y corre:</p>
+      <p>Built by hand with <code>new</code>, going around every factory. It compiles and runs:</p>
       <ul>${bad.classes.map((c, i) => `<li>${c} → ${bad.used[i]}</li>`).join("")}</ul>
-      <p style="margin-top:.6rem">Un combo japonés con pasta y limonada de panela.
-         Lo que lo impide arriba no es una validación: es que sin la fábrica no hay
-         forma de crear un plato.</p>`;
+      <p style="margin-top:.6rem">A japanese combo with pasta and panela lemonade.
+         What prevents it above is not a validation: it is that without the factory
+         there is no way to create a dish.</p>`;
   } catch (e) { fail(e); }
 });

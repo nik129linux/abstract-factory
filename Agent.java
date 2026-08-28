@@ -1,13 +1,13 @@
 /**
- * La boca del modelo, y nada mas. Recibe un prompt y devuelve texto.
+ * The model's mouth, and nothing else. It takes a prompt and returns text.
  *
- * Los que deciden son los dos roles que hay encima: Waiter (el mesero, el unico
- * que habla con el cliente) y Chef (que no habla con nadie y construye contra la
- * fabrica y la despensa). Que los dos usen la misma interfaz es lo que permite
- * cambiar el modelo por el agente offline sin que ninguno de los dos se entere.
+ * The ones that decide are the two roles above it: Waiter (the only one that
+ * talks to the client) and Chef (which talks to nobody and builds against the
+ * factory and the pantry). Both going through the same interface is what lets
+ * the model be swapped for the offline agent without either of them noticing.
  *
- * La primera linea de todo prompt dice "ROL: ..." para que el agente offline
- * sepa que le estan pidiendo sin tener que entender el texto.
+ * Every prompt opens with a "ROLE: ..." line so the offline agent knows what is
+ * being asked of it without having to understand the text.
  */
 public interface Agent {
 

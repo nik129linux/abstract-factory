@@ -1,9 +1,9 @@
 /**
- * El pedido. Se llena de a pedazos durante la conversacion: el mesero saca lo
- * que puede de cada turno y pregunta por lo que falta.
+ * The order. It gets filled in pieces during the conversation: the waiter pulls
+ * whatever it can out of each turn and asks for what is still missing.
  *
- * Es inmutable a proposito -- cada turno produce un pedido nuevo en vez de
- * pisar el anterior, asi que se puede mostrar como fue creciendo.
+ * Immutable on purpose -- every turn produces a new order instead of writing
+ * over the previous one, so it can be shown as it grew.
  */
 public record Order(int diners, int budget, String occasion, String restrictions) {
 
@@ -11,7 +11,7 @@ public record Order(int diners, int budget, String occasion, String restrictions
         return new Order(0, 0, "", "");
     }
 
-    /** Solo pisa lo que venga con valor: el turno 3 no borra lo del turno 1. */
+    /** Only overwrites what arrives with a value: turn 3 does not erase turn 1. */
     public Order merge(int newDiners, int newBudget, String newOccasion, String newRestrictions) {
         return new Order(
                 newDiners > 0 ? newDiners : diners,
@@ -20,36 +20,36 @@ public record Order(int diners, int budget, String occasion, String restrictions
                 newRestrictions.isBlank() ? restrictions : newRestrictions.trim());
     }
 
-    /** Lo minimo para poder cocinar y cotizar. */
+    /** The minimum needed to cook and to quote. */
     public boolean isComplete() {
         return diners > 0 && budget > 0;
     }
 
     public String missing() {
         if (diners <= 0 && budget <= 0) {
-            return "cuantos son y cuanto quieren gastar por persona";
+            return "how many people and how much they want to spend each";
         }
         if (diners <= 0) {
-            return "cuantos comensales son";
+            return "how many diners";
         }
         if (budget <= 0) {
-            return "cuanto quieren gastar por persona";
+            return "how much they want to spend per person";
         }
         return "";
     }
 
-    /** Como se le cuenta el pedido al modelo. */
+    /** How the order is told to the model. */
     public String describe() {
         StringBuilder sb = new StringBuilder();
-        sb.append(diners > 0 ? diners + " comensales" : "comensales sin definir");
+        sb.append(diners > 0 ? diners + " diners" : "diners not set yet");
         if (budget > 0) {
-            sb.append(", hasta $").append(budget).append(" por persona");
+            sb.append(", up to $").append(budget).append(" per person");
         }
         if (!occasion.isEmpty()) {
-            sb.append(", ocasion: ").append(occasion);
+            sb.append(", occasion: ").append(occasion);
         }
         if (!restrictions.isEmpty()) {
-            sb.append(", restricciones: ").append(restrictions);
+            sb.append(", restrictions: ").append(restrictions);
         }
         return sb.toString();
     }

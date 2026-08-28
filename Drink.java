@@ -1,11 +1,11 @@
 /**
- * Producto abstracto 4 de 4. La bebida es la que mas duele si se mezcla: un
- * postre puede pasar desapercibido, un sake con bandeja paisa no.
+ * Abstract product 4 of 4. The drink is the one that hurts most when the
+ * families get mixed: a dessert can slip by, sake with a bandeja paisa cannot.
  */
 public interface Drink extends Course {
 
     @Override
     default String role() {
-        return "Bebida";
+        return "Drink";
     }
 }

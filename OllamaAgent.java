@@ -5,11 +5,11 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 
 /**
- * El modelo de verdad, detras de ollama.
+ * The real model, behind ollama.
  *
- * java.net.http viene con el JDK desde Java 11, asi que sigue sin haber
- * libreria. Ollama expone /api/generate y con "stream": false contesta un solo
- * JSON plano, que es justo lo que Json.value sabe leer.
+ * java.net.http ships with the JDK since Java 11, so there is still no library
+ * here. Ollama exposes /api/generate and with "stream": false it answers with a
+ * single flat JSON object, which is exactly what Json.value knows how to read.
  */
 public class OllamaAgent implements Agent {
 
@@ -54,15 +54,15 @@ public class OllamaAgent implements Agent {
             HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
                 throw new IllegalStateException(
-                        "ollama contesto " + response.statusCode() + ": " + response.body());
+                        "ollama answered " + response.statusCode() + ": " + response.body());
             }
             lastReply = Json.value(response.body(), "response");
             return lastReply;
         } catch (java.io.IOException e) {
-            throw new IllegalStateException("no hay ollama en " + endpoint + " (" + e.getMessage() + ")");
+            throw new IllegalStateException("no ollama at " + endpoint + " (" + e.getMessage() + ")");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException("consulta interrumpida");
+            throw new IllegalStateException("request interrupted");
         }
     }
 

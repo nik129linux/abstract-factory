@@ -1,6 +1,6 @@
 import java.util.List;
 
-/** Producto concreto: bebida colombiana. */
+/** Concrete product: Colombian drink. */
 public class ColombianDrink extends AbstractCourse implements Drink {
 
     @Override
@@ -10,8 +10,7 @@ public class ColombianDrink extends AbstractCourse implements Drink {
 
     @Override
     public String rules() {
-        return "jugo de fruta con agua, una aguapanela o un cafe de la finca; "
-             + "se sirve en jarra para compartir";
+        return "fruit juice with water, an aguapanela or coffee from the farm; served in a jug to share";
     }
 
     @Override

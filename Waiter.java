@@ -2,19 +2,20 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * EL MESERO. El unico que habla con el cliente.
+ * THE WAITER. The only one that talks to the client.
  *
- * Y no conversa: en cada turno elige UNA accion de un conjunto cerrado, y el
- * programa la ejecuta. Ahi esta la diferencia con un chatbot -- el modelo no
- * escribe texto que se muestra y ya, decide que hace el sistema. Si contesta
- * algo que no es una de las cuatro acciones, el turno se rechaza.
+ * And it does not chat: on every turn it picks ONE action out of a closed set,
+ * and the program runs it. That is the difference from a chatbot -- the model
+ * does not write text that gets displayed and that is that, it decides what the
+ * system does. If it answers with anything that is not one of the four actions,
+ * the turn is rejected.
  *
- * Tampoco dice precios: eso lo suma la despensa.
+ * It does not quote prices either: the pantry adds those up.
  */
 public class Waiter {
 
-    /** Las unicas cuatro cosas que el mesero puede hacer. */
-    public enum Action { PREGUNTAR, CONSTRUIR, AJUSTAR, RECHAZAR }
+    /** The only four things the waiter can do. */
+    public enum Action { ASK, BUILD, ADJUST, REFUSE }
 
     public record Decision(Action action, String say, int diners, int budget,
                            String occasion, String restrictions,
@@ -29,61 +30,64 @@ public class Waiter {
 
     public Decision listen(String said, Order order, Combo combo, List<String> history) {
         String prompt = """
-                ROL: mesero
-                Sos el mesero de un servicio de catering. Tu trabajo NO es conversar:
-                es armar un pedido y mandarlo a cocinar. Nunca digas precios.
+                ROLE: waiter
+                You are the waiter of a catering service. Your job is NOT to chat:
+                it is to put together an order and send it to be cooked. Never quote prices.
 
-                Cocinas disponibles: %s
-                Pedido hasta ahora: %s
-                Combo actual: %s
+                Kitchens available: %s
+                Order so far: %s
+                Current combo: %s
 
-                Conversacion:
+                Conversation:
                 %s
-                cliente: %s
+                client: %s
 
-                Elegi UNA accion:
-                PREGUNTAR  falta un dato del pedido (comensales o presupuesto por persona)
-                CONSTRUIR  ya sabes cuantos son y cuanto gastan: elegi la cocina y mandalo a cocinar
-                AJUSTAR    ya hay un combo y el cliente quiere cambiar algo
-                RECHAZAR   el cliente pide algo que no es armar un combo de catering
+                YOU choose the kitchen. Never ask the client which cuisine they want:
+                decide it yourself from the occasion and what they said.
 
-                Responde exactamente en estas lineas, sin nada mas:
-                ACCION: <PREGUNTAR|CONSTRUIR|AJUSTAR|RECHAZAR>
-                DECIR: <una sola linea para el cliente, en espanol, sin precios>
-                COMENSALES: <numero o ->
-                PRESUPUESTO: <pesos por persona, solo el numero, o ->
-                OCASION: <texto corto o ->
-                RESTRICCIONES: <texto corto o ->
-                COCINA: <%s o ->
-                CAMBIAR: <entrada|fuerte|postre|bebida|todo o ->
+                Pick ONE action:
+                ASK     only when the diners or the budget per person are still unknown
+                BUILD   you know how many and how much: choose the kitchen and cook it
+                ADJUST  there is already a combo and the client wants something changed
+                REFUSE  only when the client asks for something that is not catering at all
+
+                Answer in exactly these lines, nothing else:
+                ACTION: <ASK|BUILD|ADJUST|REFUSE>
+                SAY: <one single line for the client, no prices>
+                DINERS: <number or ->
+                BUDGET: <pesos per person, digits only, or ->
+                OCCASION: <short text or ->
+                RESTRICTIONS: <short text or ->
+                KITCHEN: <%s or ->
+                CHANGE: <starter|main|dessert|drink|all or ->
                 """.formatted(
                         String.join(", ", Kitchens.traditions()),
                         order.describe(),
-                        combo == null ? "ninguno todavia"
-                                : "cocina " + combo.kitchen().tradition() + ", "
-                                  + combo.size() + " platos, $" + combo.costPerPerson() + " por persona",
-                        history.isEmpty() ? "(recien empieza)" : String.join("\n", history),
+                        combo == null ? "none yet"
+                                : combo.kitchen().tradition() + " kitchen, "
+                                  + combo.size() + " courses, $" + combo.costPerPerson() + " per person",
+                        history.isEmpty() ? "(just starting)" : String.join("\n", history),
                         said,
                         String.join("|", Kitchens.traditions()));
 
         String reply = agent.ask(prompt);
 
-        Action action = parse(Reply.line(reply, "ACCION"));
-        String say = Reply.line(reply, "DECIR");
+        Action action = parse(Reply.line(reply, "ACTION"));
+        String say = Reply.line(reply, "SAY");
         if (say.isEmpty()) {
-            say = "Contame un poco mas del evento.";
+            say = "Tell me a bit more about the event.";
         }
 
         return new Decision(action, say,
-                Reply.number(Reply.line(reply, "COMENSALES")),
-                Reply.number(Reply.line(reply, "PRESUPUESTO")),
-                Reply.line(reply, "OCASION"),
-                Reply.line(reply, "RESTRICCIONES"),
-                Reply.line(reply, "COCINA").toLowerCase(Locale.ROOT),
-                Reply.line(reply, "CAMBIAR").toLowerCase(Locale.ROOT));
+                Reply.number(Reply.line(reply, "DINERS")),
+                Reply.number(Reply.line(reply, "BUDGET")),
+                Reply.line(reply, "OCCASION"),
+                Reply.line(reply, "RESTRICTIONS"),
+                Reply.line(reply, "KITCHEN").toLowerCase(Locale.ROOT),
+                Reply.line(reply, "CHANGE").toLowerCase(Locale.ROOT));
     }
 
-    /** Fuera del conjunto cerrado no hay accion valida: se pregunta y ya. */
+    /** Outside the closed set there is no valid action: it just asks. */
     private static Action parse(String written) {
         String clean = written.toUpperCase(Locale.ROOT);
         for (Action action : Action.values()) {
@@ -91,6 +95,6 @@ public class Waiter {
                 return action;
             }
         }
-        return Action.PREGUNTAR;
+        return Action.ASK;
     }
 }

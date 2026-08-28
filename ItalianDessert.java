@@ -1,6 +1,6 @@
 import java.util.List;
 
-/** Producto concreto: postre italiano. */
+/** Concrete product: Italian dessert. */
 public class ItalianDessert extends AbstractCourse implements Dessert {
 
     @Override
@@ -10,8 +10,7 @@ public class ItalianDessert extends AbstractCourse implements Dessert {
 
     @Override
     public String rules() {
-        return "crema, cafe o fruta de temporada; se arma en capas o en copa, "
-             + "reposa en frio antes de servir";
+        return "cream, coffee or seasonal fruit; layered or in a cup, rests in the cold before serving";
     }
 
     @Override

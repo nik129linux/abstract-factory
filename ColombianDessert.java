@@ -1,6 +1,6 @@
 import java.util.List;
 
-/** Producto concreto: postre colombiano. */
+/** Concrete product: Colombian dessert. */
 public class ColombianDessert extends AbstractCourse implements Dessert {
 
     @Override
@@ -10,8 +10,7 @@ public class ColombianDessert extends AbstractCourse implements Dessert {
 
     @Override
     public String rules() {
-        return "dulce de panela o de fruta cocida, a veces con queso fresco al lado; "
-             + "se sirve tibio o al clima";
+        return "panela or cooked fruit sweet, sometimes with fresh cheese alongside; served warm or at room temperature";
     }
 
     @Override

@@ -1,12 +1,12 @@
 import java.util.List;
 
-/** Fabrica concreta 3 de 3. */
+/** Concrete factory. */
 public class ColombianKitchen implements Kitchen {
 
-    public static final String TRADITION = "colombiana";
+    public static final String TRADITION = "colombian";
 
-    static final List<String> FORBIDDEN =
-            List.of("soya", "wasabi", "matcha", "parmesano", "risotto", "prosciutto");
+    /** What all four classes of this family are barred from, in one place. */
+    static final List<String> FORBIDDEN = List.of("soy", "wasabi", "matcha", "parmesan", "risotto", "prosciutto");
 
     @Override
     public String tradition() {
@@ -15,8 +15,7 @@ public class ColombianKitchen implements Kitchen {
 
     @Override
     public String accent() {
-        return "cocina colombiana: maiz, platano, tuberculos y guiso de cebolla y tomate; "
-             + "cocciones largas, panela como dulce, sabor sin picante agresivo";
+        return "colombian cooking: corn, plantain, tubers and a sofrito of onion and tomato; long cooking, panela for sweetness, flavour without aggressive heat";
     }
 
     @Override

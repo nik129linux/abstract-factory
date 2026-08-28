@@ -1,6 +1,6 @@
 import java.util.List;
 
-/** Producto concreto: entrada italiana. */
+/** Concrete product: Italian starter. */
 public class ItalianStarter extends AbstractCourse implements Starter {
 
     @Override
@@ -10,8 +10,7 @@ public class ItalianStarter extends AbstractCourse implements Starter {
 
     @Override
     public String rules() {
-        return "antipasto de tres o cuatro ingredientes, se come con la mano o con pan, "
-             + "aceite de oliva de por medio, nada de salsa caliente";
+        return "an antipasto of three or four ingredients, eaten by hand or with bread, olive oil involved, no hot sauce";
     }
 
     @Override

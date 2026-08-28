@@ -1,47 +1,48 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Catering — Abstract Factory + agente</title>
+<title>Catering — Abstract Factory + agent</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header>
-  <h1>Servicio de catering</h1>
-  <p class="sub">Abstract Factory. Le hablás al mesero, él arma el pedido y decide la cocina;
-     el chef construye el combo contra la fábrica y la despensa, y el <b>programa</b> lo cotiza.</p>
-  <p class="agent">agente: <b id="agent">…</b> · el precio lo suma la despensa, no lo dice el modelo</p>
+  <h1>Catering service</h1>
+  <p class="sub">Abstract Factory. You talk to the waiter, it puts the order together and
+     picks the kitchen; the chef builds the combo against the factory and the pantry, and
+     the <b>program</b> prices it.</p>
+  <p class="agent">agent: <b id="agent">…</b> · the price is the pantry added up, not something the model says</p>
 </header>
 
 <section class="card">
   <div id="thread" class="thread">
-    <div class="msg bot">Buenas. ¿Para cuántos es el evento y cuánto quieren gastar por persona?</div>
+    <div class="msg bot">Evening. How many is the event for, and how much per person?</div>
   </div>
   <div class="composer">
-    <input id="text" placeholder="somos 6, cena de cierre de proyecto, algo liviano, unas 60 lucas" autocomplete="off">
-    <button id="send">Enviar</button>
+    <input id="text" placeholder="six of us, project wrap dinner, something light" autocomplete="off">
+    <button id="send">Send</button>
   </div>
   <div class="quick">
-    <button class="chip-btn" data-say="somos 6, cena de cierre de proyecto, algo liviano">6, cena de cierre</button>
-    <button class="chip-btn" data-say="unas 60 lucas por persona">60 lucas p/p</button>
-    <button class="chip-btn" data-say="muy caro, y uno no come pescado">muy caro y sin pescado</button>
-    <button class="chip-btn" data-say="cambiame el postre">cambiá el postre</button>
+    <button class="chip-btn" data-say="six of us, project wrap dinner, something light">6, wrap dinner</button>
+    <button class="chip-btn" data-say="about 60000 per person">60k each</button>
+    <button class="chip-btn" data-say="too expensive, and one of us does not eat fish">too dear, no fish</button>
+    <button class="chip-btn" data-say="change the dessert">change the dessert</button>
   </div>
 </section>
 
 <section class="card">
-  <h2>Lo que pasa por debajo</h2>
-  <p class="hint">El mesero no escribe texto libre: en cada turno elige una acción de un conjunto
-     cerrado y el programa la ejecuta. Eso es lo que lo separa de un chatbot.</p>
+  <h2>What happens underneath</h2>
+  <p class="hint">The waiter does not write free text: on every turn it picks one action out of a
+     closed set and the program runs it. That is what separates it from a chatbot.</p>
   <p class="actions">
-    <span class="act" data-act="PREGUNTAR">PREGUNTAR</span>
-    <span class="act" data-act="CONSTRUIR">CONSTRUIR</span>
-    <span class="act" data-act="AJUSTAR">AJUSTAR</span>
-    <span class="act" data-act="RECHAZAR">RECHAZAR</span>
+    <span class="act" data-act="ASK">ASK</span>
+    <span class="act" data-act="BUILD">BUILD</span>
+    <span class="act" data-act="ADJUST">ADJUST</span>
+    <span class="act" data-act="REFUSE">REFUSE</span>
   </p>
-  <button id="mixed" class="ghost">¿Y si armo el combo sin la fábrica?</button>
+  <button id="mixed" class="ghost">What if I build the combo without the factory?</button>
   <div id="mixedOut" class="mixed hidden"></div>
 </section>
 

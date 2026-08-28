@@ -1,19 +1,20 @@
 /**
- * LA FABRICA ABSTRACTA.
+ * THE ABSTRACT FACTORY.
  *
- * Una cocina = una tradicion culinaria, y es la unica forma de conseguir un
- * plato. Por eso los cuatro platos que entrega siempre pegan entre si: no hay
- * manera de pedirle a la cocina japonesa un postre italiano, la firma no existe.
+ * One kitchen = one culinary tradition, and it is the only way to get a dish.
+ * That is why the four dishes it hands out always belong together: there is no
+ * way to ask the japanese kitchen for an italian dessert, the signature does
+ * not exist.
  *
- * Quien programa contra esta interfaz nunca escribe el nombre de una clase
- * concreta, y ese es el punto del patron.
+ * Code written against this interface never names a concrete class, and that is
+ * the point of the pattern.
  */
 public interface Kitchen {
 
-    /** Como se llama la familia. Es lo que el agente contesta al elegir. */
+    /** The family's name. It is what the agent answers when it picks one. */
     String tradition();
 
-    /** Una linea que describe la cocina, para meterla en el prompt del modelo. */
+    /** One line describing the kitchen, to drop into the model's prompt. */
     String accent();
 
     Starter createStarter();

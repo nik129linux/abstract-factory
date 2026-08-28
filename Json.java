@@ -1,9 +1,9 @@
 import java.util.List;
 
 /**
- * JSON a mano. El JDK no trae una clase de JSON y el taller es en Java pelado,
- * asi que no hay libreria: escribir es facil, y de leer solo hace falta sacar
- * un campo de texto de la respuesta plana de Ollama.
+ * JSON by hand. The JDK has no JSON class and the assignment is plain Java, so
+ * there is no library: writing is easy, and the only reading needed is pulling
+ * one text field out of Ollama's flat answer.
  */
 public final class Json {
 
@@ -54,9 +54,9 @@ public final class Json {
     }
 
     /**
-     * Saca un campo de texto de un objeto JSON plano. Alcanza porque la unica
-     * respuesta que hay que leer es la de Ollama, que trae "response" arriba
-     * del todo y sin anidar.
+     * Pulls a text field out of a flat JSON object. That is enough because the
+     * only answer to be read is Ollama's, which carries "response" near the top
+     * and unnested.
      */
     public static String value(String json, String field) {
         int at = json.indexOf("\"" + field + "\"");

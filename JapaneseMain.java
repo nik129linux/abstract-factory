@@ -1,6 +1,6 @@
 import java.util.List;
 
-/** Producto concreto: plato fuerte japones. */
+/** Concrete product: Japanese main course. */
 public class JapaneseMain extends AbstractCourse implements MainCourse {
 
     @Override
@@ -10,8 +10,7 @@ public class JapaneseMain extends AbstractCourse implements MainCourse {
 
     @Override
     public String rules() {
-        return "arroz o fideo como base, proteina a la parrilla o al vapor, "
-             + "salsa a base de soya o miso, se monta en cuenco";
+        return "rice or noodles as the base, protein grilled or steamed, a soy or miso sauce, served in a bowl";
     }
 
     @Override

@@ -1,6 +1,6 @@
 import java.util.List;
 
-/** Producto concreto: entrada colombiana. */
+/** Concrete product: Colombian starter. */
 public class ColombianStarter extends AbstractCourse implements Starter {
 
     @Override
@@ -10,8 +10,7 @@ public class ColombianStarter extends AbstractCourse implements Starter {
 
     @Override
     public String rules() {
-        return "algo de maiz o platano, o un caldo corto; se sirve caliente "
-             + "y va acompanado de aji aparte, nunca encima";
+        return "something made of corn or plantain, or a short broth; served hot, with the chilli on the side, never on top";
     }
 
     @Override

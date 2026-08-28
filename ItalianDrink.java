@@ -1,6 +1,6 @@
 import java.util.List;
 
-/** Producto concreto: bebida italiana. */
+/** Concrete product: Italian drink. */
 public class ItalianDrink extends AbstractCourse implements Drink {
 
     @Override
@@ -10,8 +10,7 @@ public class ItalianDrink extends AbstractCourse implements Drink {
 
     @Override
     public String rules() {
-        return "vino de una region italiana, un aperitivo amargo o un cafe corto; "
-             + "se nombra la region, no la marca";
+        return "wine from an italian region, a bitter aperitivo or a short coffee; name the region, not the brand";
     }
 
     @Override

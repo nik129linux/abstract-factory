@@ -2,12 +2,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * El estado de la conversacion del lado del servidor: los turnos, el pedido a
- * medio llenar y el combo vigente.
+ * The server-side state of the conversation: the turns, the half-filled order
+ * and the combo currently on the table.
  *
- * Es tambien quien ejecuta la accion que eligio el mesero. El mesero decide,
- * esto hace -- y lo que hace es siempre construir o rehacer objetos con la
- * fabrica, nunca escribir texto.
+ * It is also what runs the action the waiter picked. The waiter decides, this
+ * does -- and what it does is always build or rebuild objects with the factory,
+ * never write text.
  */
 public class Conversation {
 
@@ -47,7 +47,7 @@ public class Conversation {
         return chef.log();
     }
 
-    /** Un turno del cliente. Devuelve nada: el estado queda en el objeto. */
+    /** One turn from the client. Returns nothing: the state stays in the object. */
     public void say(String said) {
         chef.clearLog();
         Waiter.Decision decision = waiter.listen(said, order, combo, history);
@@ -57,31 +57,31 @@ public class Conversation {
         Waiter.Action action = decision.action();
         String say = decision.say();
 
-        // El modelo puede querer construir sin tener los datos. El programa manda.
-        if (action == Waiter.Action.CONSTRUIR && !order.isComplete()) {
-            action = Waiter.Action.PREGUNTAR;
-            say = "Antes de armarlo necesito " + order.missing() + ".";
+        // The model may want to build without having the details. The program wins.
+        if (action == Waiter.Action.BUILD && !order.isComplete()) {
+            action = Waiter.Action.ASK;
+            say = "Before I put it together I need " + order.missing() + ".";
         }
-        if (action == Waiter.Action.AJUSTAR && combo == null) {
-            action = order.isComplete() ? Waiter.Action.CONSTRUIR : Waiter.Action.PREGUNTAR;
+        if (action == Waiter.Action.ADJUST && combo == null) {
+            action = order.isComplete() ? Waiter.Action.BUILD : Waiter.Action.ASK;
         }
 
         switch (action) {
-            case CONSTRUIR -> build(decision, said);
-            case AJUSTAR -> adjust(decision, said);
+            case BUILD -> build(decision, said);
+            case ADJUST -> adjust(decision, said);
             default -> { }
         }
 
         lastAction = action.name();
         lastSay = say;
-        history.add("cliente: " + said);
-        history.add("mesero: " + say);
+        history.add("client: " + said);
+        history.add("waiter: " + say);
         if (history.size() > 12) {
             history.subList(0, 2).clear();
         }
     }
 
-    /** El mesero nombro una cocina; la fabrica hace el resto. */
+    /** The waiter named a kitchen; the factory does the rest. */
     private void build(Waiter.Decision decision, String said) {
         Kitchen kitchen;
         try {
@@ -103,9 +103,9 @@ public class Conversation {
     }
 
     /**
-     * La restriccion global: el combo entero tiene que caber en el presupuesto.
-     * Si no cabe, el chef vuelve sobre el plato mas caro. Esto es lo que hace
-     * que el agente no sea lineal -- vuelve atras sobre trabajo ya hecho.
+     * The global constraint: the whole combo has to fit the budget. When it does
+     * not, the chef goes back over the priciest dish. This is what stops the
+     * agent from being linear -- it revisits work it had already finished.
      */
     private void fitBudget(String said) {
         for (int round = 0; round < BUDGET_ROUNDS; round++) {
@@ -114,30 +114,30 @@ public class Conversation {
             }
             int worst = combo.priciest();
             int over = combo.costPerPerson() - order.budget();
-            // No se le puede pedir a un solo plato que absorba todo el exceso: se
-            // le pide bajar a una cuota sensata del combo y se vuelve a mirar.
+            // One dish cannot be asked to absorb the whole overshoot: it is asked
+            // down to a sensible share of the combo and then we look again.
             int cap = Math.max(order.budget() * 3 / 10, combo.course(worst).cost() - over);
             combo.redo(worst);
             chef.cookOne(combo, worst, order,
-                    said + " (el combo se paso del tope, este plato tiene que bajar)", cap);
+                    said + " (the combo went over the cap, this dish has to come down)", cap);
         }
     }
 
     private List<Integer> coursesToRedo(String change) {
-        if (change.contains("todo") || change.isEmpty()) {
+        if (change.contains("all") || change.isEmpty()) {
             return List.of(1, 2, 3, 4);
         }
         List<Integer> which = new ArrayList<>();
-        if (change.contains("entrada")) {
+        if (change.contains("starter")) {
             which.add(1);
         }
-        if (change.contains("fuerte") || change.contains("plato")) {
+        if (change.contains("main")) {
             which.add(2);
         }
-        if (change.contains("postre")) {
+        if (change.contains("dessert")) {
             which.add(3);
         }
-        if (change.contains("bebida")) {
+        if (change.contains("drink")) {
             which.add(4);
         }
         return which.isEmpty() ? List.of(1, 2, 3, 4) : which;

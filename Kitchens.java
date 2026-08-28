@@ -2,11 +2,11 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * El unico lugar del programa donde aparece un "new XKitchen()".
+ * The only place in the program where a "new XKitchen()" appears.
  *
- * El agente contesta una palabra; esto la convierte en una fabrica. Meter una
- * cuarta cocina es escribir sus cinco clases y agregarla a esta lista: ni el
- * agente, ni el Menu, ni el servidor se enteran.
+ * The agent answers with a word; this turns it into a factory. Adding a fourth
+ * kitchen means writing its five classes and adding it to this list: the agent,
+ * the combo and the server never find out.
  */
 public final class Kitchens {
 
@@ -21,7 +21,7 @@ public final class Kitchens {
         return all().stream().map(Kitchen::tradition).toList();
     }
 
-    /** Tolerante a proposito: el modelo contesta texto, no un enum. */
+    /** Forgiving on purpose: the model answers with text, not with an enum. */
     public static Kitchen byTradition(String answer) {
         String clean = answer == null ? "" : answer.toLowerCase(Locale.ROOT);
         for (Kitchen kitchen : all()) {
@@ -29,6 +29,6 @@ public final class Kitchens {
                 return kitchen;
             }
         }
-        throw new IllegalArgumentException("el agente no nombro ninguna cocina: " + answer);
+        throw new IllegalArgumentException("the agent named no kitchen: " + answer);
     }
 }

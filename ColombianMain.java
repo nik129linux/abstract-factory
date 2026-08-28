@@ -1,6 +1,6 @@
 import java.util.List;
 
-/** Producto concreto: plato fuerte colombiano. */
+/** Concrete product: Colombian main course. */
 public class ColombianMain extends AbstractCourse implements MainCourse {
 
     @Override
@@ -10,8 +10,7 @@ public class ColombianMain extends AbstractCourse implements MainCourse {
 
     @Override
     public String rules() {
-        return "guiso de base, un almidon y una proteina en el mismo plato; "
-             + "coccion larga, se monta en plato hondo o bandeja";
+        return "a sofrito base, a starch and a protein on the same plate; long cooking, served in a deep plate or a platter";
     }
 
     @Override

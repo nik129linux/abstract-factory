@@ -1,11 +1,12 @@
 /**
- * Producto abstracto 1 de 4. El rol no cambia entre cocinas: una entrada es una
- * entrada en Tokio y en Medellin, y por eso vive aca y no en las concretas.
+ * Abstract product 1 of 4. The role does not change between kitchens: a starter
+ * is a starter in Tokyo and in Medellin, which is why it lives here and not in
+ * the concrete classes.
  */
 public interface Starter extends Course {
 
     @Override
     default String role() {
-        return "Entrada";
+        return "Starter";
     }
 }

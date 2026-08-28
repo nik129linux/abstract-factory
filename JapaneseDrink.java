@@ -1,6 +1,6 @@
 import java.util.List;
 
-/** Producto concreto: bebida japonesa. */
+/** Concrete product: Japanese drink. */
 public class JapaneseDrink extends AbstractCourse implements Drink {
 
     @Override
@@ -10,8 +10,7 @@ public class JapaneseDrink extends AbstractCourse implements Drink {
 
     @Override
     public String rules() {
-        return "te verde, cebada tostada o sake; se sirve en taza o tokkuri, "
-             + "sin azucar anadida";
+        return "green tea, roasted barley or sake; served in a cup or a tokkuri, no added sugar";
     }
 
     @Override

@@ -3,32 +3,38 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * El mismo sistema sin modelo.
+ * The same system with no model.
  *
- * No es parte del taller: es el plan B para sustentar. gemma4:31b-cloud pasa por
- * ollama pero el modelo corre afuera, asi que sin internet en el salon la
- * interfaz quedaria muerta en la mitad de la demo.
+ * Not part of the assignment: it is the fallback for the presentation.
+ * gemma4:31b-cloud goes through ollama but the model runs off the machine, so
+ * with no internet in the classroom the interface would die halfway through the
+ * demo.
  *
- * Contesta en los mismos formatos que el modelo. Se orienta por la primera
- * linea del prompt, que dice el rol: por eso todos los prompts empiezan con
- * "ROL:". Ni el mesero ni el chef se enteran del cambio.
+ * It answers in the same formats the model does. It orients itself by the first
+ * line of the prompt, which states the role -- that is why every prompt opens
+ * with "ROLE:". Neither the waiter nor the chef notices the swap.
  */
 public class OfflineAgent implements Agent {
 
     private static final Pattern NUMBER = Pattern.compile("\\d[\\d.]*");
+
+    /** The model reads "six of us"; a regex does not, so it gets a small table. */
+    private static final String[] WORDS = {
+        "one", "two", "three", "four", "five", "six",
+        "seven", "eight", "nine", "ten", "eleven", "twelve"};
 
     private String lastPrompt = "";
     private String lastReply = "";
 
     @Override
     public String name() {
-        return "offline (sin modelo)";
+        return "offline (no model)";
     }
 
     @Override
     public String ask(String prompt) {
         lastPrompt = prompt;
-        lastReply = prompt.startsWith("ROL: mesero") ? asWaiter(prompt) : asChef(prompt);
+        lastReply = prompt.startsWith("ROLE: waiter") ? asWaiter(prompt) : asChef(prompt);
         return lastReply;
     }
 
@@ -42,22 +48,28 @@ public class OfflineAgent implements Agent {
         return lastReply;
     }
 
-    // ------------------------------------------------------------------ rol 1
+    // ------------------------------------------------------------------ role 1
 
     private String asWaiter(String prompt) {
-        String said = after(prompt, "cliente: ");
-        String known = line(prompt, "Pedido hasta ahora:");
-        boolean hasCombo = !line(prompt, "Combo actual:").contains("ninguno");
+        String said = after(prompt, "client: ");
+        String known = line(prompt, "Order so far:");
+        boolean hasCombo = !line(prompt, "Current combo:").contains("none");
 
         int diners = 0;
         int budget = 0;
+        String spelled = said.toLowerCase(Locale.ROOT);
+        for (int i = 0; i < WORDS.length; i++) {
+            if (spelled.matches(".*\\b" + WORDS[i] + "\\b.*")) {
+                diners = i + 1;
+            }
+        }
         Matcher m = NUMBER.matcher(said);
         while (m.find()) {
             int value = Integer.parseInt(m.group().replace(".", ""));
             if (value >= 1000) {
                 budget = value;
             } else if (value >= 1 && value <= 100) {
-                if (said.toLowerCase(Locale.ROOT).contains("luca")) {
+                if (said.toLowerCase(Locale.ROOT).contains("grand")) {
                     budget = value * 1000;
                 } else {
                     diners = value;
@@ -65,23 +77,23 @@ public class OfflineAgent implements Agent {
             }
         }
 
-        boolean knowsDiners = diners > 0 || !known.contains("sin definir");
-        boolean knowsBudget = budget > 0 || known.contains("por persona");
+        boolean knowsDiners = diners > 0 || !known.contains("not set");
+        boolean knowsBudget = budget > 0 || known.contains("per person");
 
         String action;
         String say;
         if (hasCombo) {
-            action = "AJUSTAR";
-            say = "Listo, lo ajusto y lo vuelvo a cotizar.";
+            action = "ADJUST";
+            say = "Right, I will rework it and quote it again.";
         } else if (knowsDiners && knowsBudget) {
-            action = "CONSTRUIR";
-            say = "Perfecto, les armo el combo.";
+            action = "BUILD";
+            say = "Perfect, I will put the combo together.";
         } else if (!knowsDiners) {
-            action = "PREGUNTAR";
-            say = "Cuantos comensales son?";
+            action = "ASK";
+            say = "How many diners are you?";
         } else {
-            action = "PREGUNTAR";
-            say = "Cuanto quieren gastar por persona?";
+            action = "ASK";
+            say = "How much do you want to spend per person?";
         }
 
         String low = said.toLowerCase(Locale.ROOT);
@@ -91,89 +103,89 @@ public class OfflineAgent implements Agent {
                 kitchen = tradition;
             }
         }
-        if (action.equals("CONSTRUIR") && kitchen.equals("-")) {
-            kitchen = low.contains("liviano") ? "japonesa" : "colombiana";
+        if (action.equals("BUILD") && kitchen.equals("-")) {
+            kitchen = low.contains("light") ? "japanese" : "colombian";
         }
 
         String change = "-";
-        for (String part : new String[]{"entrada", "postre", "bebida", "fuerte"}) {
+        for (String part : new String[]{"starter", "dessert", "drink", "main"}) {
             if (low.contains(part)) {
                 change = part;
             }
         }
 
-        return "ACCION: " + action
-             + "\nDECIR: " + say
-             + "\nCOMENSALES: " + (diners > 0 ? diners : "-")
-             + "\nPRESUPUESTO: " + (budget > 0 ? budget : "-")
-             + "\nOCASION: -"
-             + "\nRESTRICCIONES: " + (low.contains("no com") ? said.trim() : "-")
-             + "\nCOCINA: " + kitchen
-             + "\nCAMBIAR: " + change;
+        return "ACTION: " + action
+             + "\nSAY: " + say
+             + "\nDINERS: " + (diners > 0 ? diners : "-")
+             + "\nBUDGET: " + (budget > 0 ? budget : "-")
+             + "\nOCCASION: -"
+             + "\nRESTRICTIONS: " + (low.contains("no ") ? said.trim() : "-")
+             + "\nKITCHEN: " + kitchen
+             + "\nCHANGE: " + change;
     }
 
-    // ------------------------------------------------------------------ rol 2
+    // ------------------------------------------------------------------ role 2
 
     private String asChef(String prompt) {
-        String tradition = "colombiana";
+        String tradition = "colombian";
         for (String candidate : Kitchens.traditions()) {
-            if (prompt.contains("cocina " + candidate)) {
+            if (prompt.contains("a " + candidate + " catering")) {
                 tradition = candidate;
             }
         }
-        String role = "Entrada";
-        for (String candidate : new String[]{"Plato fuerte", "Postre", "Bebida", "Entrada"}) {
-            if (prompt.contains("combo: " + candidate)) {
+        String role = "Starter";
+        for (String candidate : new String[]{"Main", "Dessert", "Drink", "Starter"}) {
+            if (prompt.contains("combo is: " + candidate)) {
                 role = candidate;
             }
         }
         String[] dish = canned(tradition, role);
-        return "NOMBRE: " + dish[0] + "\nINGREDIENTES: " + dish[1] + "\nPASOS: " + dish[2];
+        return "NAME: " + dish[0] + "\nINGREDIENTS: " + dish[1] + "\nSTEPS: " + dish[2];
     }
 
     private static String[] canned(String tradition, String role) {
         return switch (tradition + "/" + role) {
-            case "japonesa/Entrada" -> new String[]{"Sunomono de pepino",
-                    "pepino | vinagre de arroz | alga wakame | ajonjoli",
-                    "cortar el pepino fino | salar y escurrir | mezclar con el vinagre | enfriar"};
-            case "japonesa/Plato fuerte" -> new String[]{"Donburi de tofu",
-                    "arroz japones | tofu | salsa de soya | cebollin",
-                    "cocer el arroz | dorar el tofu | glasear con soya | montar en cuenco"};
-            case "japonesa/Postre" -> new String[]{"Mochi de matcha",
-                    "arroz glutinoso | matcha | frijol rojo dulce",
-                    "cocer al vapor | amasar en frio | porcionar | rellenar"};
-            case "japonesa/Bebida" -> new String[]{"Te de cebada tostada",
-                    "cebada tostada | jengibre",
-                    "tostar la cebada | infusionar diez minutos | colar | servir frio"};
-            case "italiana/Entrada" -> new String[]{"Bruschetta de tomate",
-                    "pan rustico | tomate | albahaca | aceite de oliva",
-                    "tostar el pan | picar el tomate | frotar ajo | montar y aceitar"};
-            case "italiana/Plato fuerte" -> new String[]{"Cacio e pepe",
-                    "espagueti | pecorino | aceite de oliva",
-                    "cocer la pasta | tostar la pimienta | emulsionar el queso | ligar fuera del fuego"};
-            case "italiana/Postre" -> new String[]{"Crema al cacao",
-                    "crema | cacao | limon",
-                    "calentar la crema | disolver el cacao | moldear | enfriar"};
-            case "italiana/Bebida" -> new String[]{"Tinto de la casa",
-                    "vino tinto",
-                    "abrir treinta minutos antes | servir a dieciseis grados"};
-            case "colombiana/Entrada" -> new String[]{"Arepa de choclo con quesito",
-                    "maiz tierno | quesito | cebolla larga",
-                    "moler el maiz | armar las arepas | asar en budare | abrir y rellenar"};
-            case "colombiana/Plato fuerte" -> new String[]{"Sudado de pollo",
-                    "pollo | papa | guiso | cilantro",
-                    "hacer el guiso | sellar el pollo | agregar papa y agua | cocinar a fuego bajo"};
-            case "colombiana/Postre" -> new String[]{"Brevas con arequipe",
-                    "breva | panela | arequipe",
-                    "cocer las brevas en agua de panela | dejar reposar | rellenar con arequipe"};
-            case "colombiana/Bebida" -> new String[]{"Limonada de panela",
-                    "limon | panela",
-                    "derretir la panela | exprimir el limon | mezclar | servir en jarra"};
-            default -> new String[]{"plato de la casa", "papa | cebolla larga", "cocinar | servir"};
+            case "japanese/Starter" -> new String[]{"Cucumber sunomono",
+                    "cucumber | rice vinegar | wakame seaweed | sesame",
+                    "slice the cucumber thin | salt and drain | toss with the vinegar | chill"};
+            case "japanese/Main" -> new String[]{"Tofu donburi",
+                    "japanese rice | tofu | soy sauce | spring onion",
+                    "cook the rice | brown the tofu | glaze with soy | serve in a bowl"};
+            case "japanese/Dessert" -> new String[]{"Matcha mochi",
+                    "glutinous rice | matcha | sweet red bean",
+                    "steam it | knead it cold | portion it | fill it"};
+            case "japanese/Drink" -> new String[]{"Roasted barley tea",
+                    "roasted barley | ginger",
+                    "toast the barley | steep ten minutes | strain | serve cold"};
+            case "italian/Starter" -> new String[]{"Tomato bruschetta",
+                    "rustic bread | tomato | basil | olive oil",
+                    "toast the bread | dice the tomato | rub with garlic | assemble and oil"};
+            case "italian/Main" -> new String[]{"Cacio e pepe",
+                    "spaghetti | pecorino | olive oil",
+                    "cook the pasta | toast the pepper | emulsify the cheese | bind off the heat"};
+            case "italian/Dessert" -> new String[]{"Cocoa cream",
+                    "cream | cocoa | lemon",
+                    "heat the cream | dissolve the cocoa | mould it | chill"};
+            case "italian/Drink" -> new String[]{"House red",
+                    "red wine",
+                    "open it thirty minutes ahead | serve at sixteen degrees"};
+            case "colombian/Starter" -> new String[]{"Sweet corn arepa with fresh cheese",
+                    "sweet corn | fresh cheese | long onion",
+                    "grind the corn | shape the arepas | griddle them | split and fill"};
+            case "colombian/Main" -> new String[]{"Chicken sudado",
+                    "chicken | potato | sofrito | coriander",
+                    "make the sofrito | sear the chicken | add potato and water | simmer low"};
+            case "colombian/Dessert" -> new String[]{"Figs with arequipe",
+                    "fig | panela | arequipe",
+                    "poach the figs in panela water | let them rest | fill with arequipe"};
+            case "colombian/Drink" -> new String[]{"Panela lemonade",
+                    "lemon | panela",
+                    "melt the panela | squeeze the lemons | mix | serve in a jug"};
+            default -> new String[]{"house dish", "potato | long onion", "cook | serve"};
         };
     }
 
-    // ------------------------------------------------------------------ texto
+    // ------------------------------------------------------------------- text
 
     private static String line(String text, String prefix) {
         for (String raw : text.split("\n")) {
@@ -184,7 +196,7 @@ public class OfflineAgent implements Agent {
         return "";
     }
 
-    /** El ultimo "cliente: ..." del prompt es lo que acaba de decir. */
+    /** The last "client: ..." in the prompt is what was just said. */
     private static String after(String text, String marker) {
         int at = text.lastIndexOf(marker);
         if (at < 0) {
